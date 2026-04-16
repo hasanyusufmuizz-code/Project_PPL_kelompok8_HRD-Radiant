@@ -14,13 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          node-version: '18'
+          flutter-version: '3.19.0'
 
       - name: Install dependencies
-        run: echo "installing dependencies..."
+        run: flutter pub get
 
       - name: Run tests
-        run: echo "testing..."
+        run: flutter test
