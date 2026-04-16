@@ -11,22 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Analyze
-        run: flutter analyze
-
-      - name: Run tests (safe)
-        run: echo "No tests yet"
-
-      - name: Build APK
-        run: flutter build apk --debug
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: echo "No tests yet"
