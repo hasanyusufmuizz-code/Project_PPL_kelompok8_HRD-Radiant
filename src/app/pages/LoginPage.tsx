@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { useNavigate } from "react-router";
 
 import { Eye, EyeOff, Mail, Lock, BookOpen, ArrowRight, CheckCircle } from "lucide-react";
 
@@ -9,6 +10,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
 
   const handleSubmit = (e: FormEvent) => {
@@ -16,7 +18,7 @@ export function LoginPage() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      alert("Login/Register Berhasil!");
+      navigate("/dashboard");
     }, 1200);
   };
 
