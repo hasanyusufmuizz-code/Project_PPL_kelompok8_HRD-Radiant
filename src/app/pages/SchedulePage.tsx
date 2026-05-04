@@ -49,11 +49,10 @@ export function SchedulePage() {
             key={tab}
             id={`tab-${tab}`}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-              activeTab === tab
+            className={`px-5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === tab
                 ? "bg-white text-blue-600 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
             style={
               activeTab === tab
                 ? { boxShadow: "0 1px 6px rgba(59,130,246,0.12)" }
