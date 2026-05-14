@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   CheckCircle,
@@ -13,53 +14,71 @@ import {
   Award,
   RefreshCw,
 } from "lucide-react";
+import { api } from "../../lib/api";
+import { useAuth } from "../context/AuthContext";
 
-const steps = [
-  { id: 1, label: "Daftar", sublabel: "Administrasi", done: true, active: false },
-  { id: 2, label: "Tes Tulis", sublabel: "CBT Online", done: true, active: false },
-  { id: 3, label: "Micro Teaching", sublabel: "Praktek", done: false, active: true },
-  { id: 4, label: "Interview", sublabel: "HR & User", done: false, active: false },
-  { id: 5, label: "Final", sublabel: "Keputusan", done: false, active: false },
+interface DashboardStep {
+  label: string;
+  status: string;
+  nilai: number | null;
+}
+interface DashboardNotif {
+  id: number;
+  judul: string;
+  pesan: string;
+  tipe: string;
+  isRead: boolean;
+  createdAt: string;
+}
+interface DashboardData {
+  user: { namaLengkap: string; avatarUrl: string | null; posisi: string };
+  lamaran: { id: number; status: string; tanggalDaftar: string; posisi: string } | null;
+  steps: DashboardStep[];
+  notifikasi: DashboardNotif[];
+}
+
+const TAHAP_LABELS = [
+  "Pendaftaran & Administrasi",
+  "Tes Tulis (CBT)",
+  "Micro Teaching",
+  "Wawancara HR & User",
+  "Keputusan Final",
 ];
 
-const notifications = [
-  {
-    id: 1,
-    icon: Calendar,
-    color: "#3B82F6",
-    bg: "#EFF6FF",
-    title: "Jadwal Micro Teaching",
-    desc: "Kamis, 10 April 2026 • 09.00 WIB • Ruang A-201",
-    time: "2 jam lalu",
-    urgent: true,
-    isNew: true,
-  },
-  {
-    id: 2,
-    icon: CheckCircle,
-    color: "#10B981",
-    bg: "#ECFDF5",
-    title: "Tes Tulis Selesai",
-    desc: "Kamu berhasil menyelesaikan tes tulis dengan nilai 8.2",
-    time: "2 hari lalu",
-    urgent: false,
-    isNew: false,
-  },
-  {
-    id: 3,
-    icon: FileText,
-    color: "#8B5CF6",
-    bg: "#F5F3FF",
-    title: "Dokumen Diverifikasi",
-    desc: "CV dan transkrip nilai kamu telah diverifikasi oleh tim HRD",
-    time: "4 hari lalu",
-    urgent: false,
-    isNew: false,
-  },
-];
+// Fallback steps jika pelamar belum ada lamaran
+const defaultSteps = TAHAP_LABELS.map((label) => ({
+  label,
+  status: "menunggu",
+  nilai: null,
+}));
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get<DashboardData>("/dashboard")
+      .then((d) => setData(d))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const nama = data?.user.namaLengkap || user?.namaLengkap || "Pengguna";
+  const posisi = data?.lamaran?.posisi || data?.user.posisi || "-";
+  const steps = data?.steps.length ? data.steps : defaultSteps;
+  const notifikasi = data?.notifikasi ?? [];
+  const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 space-y-6">
@@ -67,10 +86,10 @@ export function DashboardPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-slate-800 mb-1" style={{ fontSize: "1.5rem" }}>
-            Halo, Daffa 👋
+            Halo, {nama} 👋
           </h1>
           <p className="text-sm text-slate-500">
-            Rabu, 1 April 2026 • Pantau progress lamaran kamu di sini
+            {today} • Pantau progress lamaran kamu di sini
           </p>
         </div>
         <div
@@ -126,48 +145,48 @@ export function DashboardPage() {
             }}
           />
 
-          {steps.map((step) => (
-            <div key={step.id} className="relative z-10 flex flex-col items-center gap-2">
+          {steps.map((step, idx) => {
+            const done = step.status === "lulus";
+            const active = step.status === "proses";
+            return (
+            <div key={idx} className="relative z-10 flex flex-col items-center gap-2">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
                 style={{
-                  background: step.done
+                  background: done
                     ? "linear-gradient(135deg, #2563EB, #3B82F6)"
-                    : step.active
+                    : active
                     ? "white"
                     : "#F1F5F9",
-                  border: step.active ? "2px solid #3B82F6" : "none",
-                  boxShadow: step.active
+                  border: active ? "2px solid #3B82F6" : "none",
+                  boxShadow: active
                     ? "0 0 0 5px rgba(59,130,246,0.15), 0 4px 12px rgba(37,99,235,0.25)"
-                    : step.done
+                    : done
                     ? "0 4px 12px rgba(37,99,235,0.28)"
                     : "none",
                 }}
               >
-                {step.done ? (
+                {done ? (
                   <CheckCircle size={18} color="white" />
-                ) : step.active ? (
+                ) : active ? (
                   <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
                 ) : (
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ background: "#CBD5E1" }}
-                  />
+                  <div className="w-3 h-3 rounded-full" style={{ background: "#CBD5E1" }} />
                 )}
               </div>
               <div className="text-center">
-                <p
-                  className="text-xs font-medium"
-                  style={{ color: step.done || step.active ? "#1E40AF" : "#94A3B8" }}
-                >
+                <p className="text-xs font-medium" style={{ color: done || active ? "#1E40AF" : "#94A3B8" }}>
                   {step.label}
                 </p>
-                <p className="text-xs" style={{ color: "#94A3B8", fontSize: "0.65rem" }}>
-                  {step.sublabel}
-                </p>
+                {step.nilai && (
+                  <p className="text-xs" style={{ color: "#3B82F6", fontSize: "0.65rem" }}>
+                    Nilai: {step.nilai}
+                  </p>
+                )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -339,43 +358,40 @@ export function DashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {notifications.map((notif) => (
-              <div
-                key={notif.id}
-                className="flex items-start gap-3.5 p-3.5 rounded-2xl transition-all hover:scale-[1.005] hover:shadow-sm cursor-pointer"
-                style={{
-                  background: notif.urgent ? "#EFF6FF" : "#F8FAFC",
-                  border: notif.urgent ? "1px solid #BFDBFE" : "1px solid transparent",
-                }}
-              >
+            {notifikasi.length === 0 ? (
+              <div className="p-6 text-center text-sm text-slate-400">Belum ada notifikasi</div>
+            ) : (
+              notifikasi.map((notif) => (
                 <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: notif.bg }}
+                  key={notif.id}
+                  className="flex items-start gap-3.5 p-3.5 rounded-2xl transition-all hover:scale-[1.005] hover:shadow-sm cursor-pointer"
+                  style={{
+                    background: notif.tipe === "urgent" ? "#EFF6FF" : "#F8FAFC",
+                    border: notif.tipe === "urgent" ? "1px solid #BFDBFE" : "1px solid transparent",
+                  }}
                 >
-                  <notif.icon size={16} color={notif.color} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-700 truncate">{notif.title}</p>
-                      {notif.isNew && (
-                        <span
-                          className="flex-shrink-0 text-white px-1.5 py-0.5 rounded-md"
-                          style={{ background: "#3B82F6", fontSize: "0.55rem", letterSpacing: "0.04em" }}
-                        >
-                          BARU
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-xs text-slate-400 flex-shrink-0">{notif.time}</span>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#EFF6FF" }}>
+                    <Bell size={16} color="#3B82F6" />
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{notif.desc}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-700 truncate">{notif.judul}</p>
+                        {!notif.isRead && (
+                          <span className="flex-shrink-0 text-white px-1.5 py-0.5 rounded-md" style={{ background: "#3B82F6", fontSize: "0.55rem" }}>
+                            BARU
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-400 flex-shrink-0">
+                        {new Date(notif.createdAt).toLocaleDateString("id-ID")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{notif.pesan}</p>
+                  </div>
                 </div>
-                {notif.urgent && (
-                  <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1 animate-pulse" />
-                )}
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

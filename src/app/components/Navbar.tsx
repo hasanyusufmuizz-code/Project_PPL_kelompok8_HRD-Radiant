@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 import {
   LayoutDashboard,
   BookOpen,
@@ -25,6 +26,8 @@ const navItems = [
 export function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const initial = user?.namaLengkap?.[0]?.toUpperCase() ?? "U";
 
   return (
     <nav
@@ -115,9 +118,9 @@ export function Navbar() {
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-medium"
                 style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)" }}
               >
-                D
+                {initial}
               </div>
-              <span className="text-sm text-slate-700 font-medium">Daffa</span>
+              <span className="text-sm text-slate-700 font-medium">{user?.namaLengkap || user?.email || "Pengguna"}</span>
               <ChevronDown size={13} className="text-slate-400" />
             </button>
 
@@ -139,7 +142,7 @@ export function Navbar() {
                   Profil Saya
                 </button>
                 <button
-                  onClick={() => navigate("/login")}
+                  onClick={() => { logout(); navigate("/login"); setShowProfile(false); }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 transition-colors"
                 >
                   <LogOut size={14} />

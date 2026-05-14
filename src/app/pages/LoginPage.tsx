@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Eye, EyeOff, Mail, Lock, BookOpen, ArrowRight, CheckCircle } from "lucide-react";
+import { api } from "../../lib/api";
+import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,15 +11,35 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    setTimeout(() => {
+    try {
+      if (isLogin) {
+        const res = await api.post<{ token: string; user: { id: number; email: string; namaLengkap: string; role: string; avatarUrl: string | null } }>(
+          "/auth/login",
+          { email, password }
+        );
+        login(res.token, res.user);
+        navigate("/dashboard");
+      } else {
+        const res = await api.post<{ token: string; user: { id: number; email: string; namaLengkap: string; role: string; avatarUrl: string | null } }>(
+          "/auth/register",
+          { namaLengkap: name, email, password }
+        );
+        login(res.token, res.user);
+        navigate("/dashboard");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+    } finally {
       setLoading(false);
-      navigate("/dashboard");
-    }, 1200);
+    }
   };
 
   const features = [
@@ -278,6 +300,13 @@ export function LoginPage() {
                   </>
                 )}
               </button>
+
+              {/* Pesan error dari server */}
+              {error && (
+                <div className="mt-3 p-3 rounded-xl text-center" style={{ background: "#FEF2F2", border: "1px solid #FECACA" }}>
+                  <p className="text-xs text-red-600">{error}</p>
+                </div>
+              )}
             </form>
 
             {/* Demo hint */}

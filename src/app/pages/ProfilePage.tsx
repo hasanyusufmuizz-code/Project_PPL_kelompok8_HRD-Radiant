@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { api } from "../../lib/api";
 import {
   User,
   Mail,
@@ -58,16 +59,18 @@ export function ProfilePage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<"personal" | "security">("personal");
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
-    namaLengkap: "Muhammad Daffa",
-    email: "daffa@example.com",
-    noHp: "081234567890",
-    alamat: "Jl. Merdeka No. 10, Bandung",
-    posisi: "Guru Matematika",
-    pendidikan: "S1 Pendidikan Matematika",
-    instansi: "Universitas Pendidikan Indonesia",
-    tentang: "Seorang calon tenaga pendidik yang berdedikasi dengan pengalaman mengajar selama 2 tahun.",
+    namaLengkap: "",
+    email: "",
+    noHp: "",
+    alamat: "",
+    posisi: "",
+    pendidikan: "",
+    instansi: "",
+    tentang: "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -75,6 +78,26 @@ export function ProfilePage() {
     passwordBaru: "",
     konfirmasiPassword: "",
   });
+
+  // Fetch profil dari API
+  useEffect(() => {
+    api.get<typeof form & { avatarUrl: string | null }>("/profile")
+      .then((data) => {
+        setForm({
+          namaLengkap: data.namaLengkap || "",
+          email: data.email || "",
+          noHp: data.noHp || "",
+          alamat: data.alamat || "",
+          posisi: data.posisi || "",
+          pendidikan: data.pendidikan || "",
+          instansi: data.instansi || "",
+          tentang: data.tentang || "",
+        });
+        if (data.avatarUrl) setAvatar(data.avatarUrl);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingProfile(false));
+  }, []);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -84,10 +107,18 @@ export function ProfilePage() {
     }
   }
 
-  function handleSave() {
-    setSaved(true);
-    toast.success("Profil berhasil diperbarui!", { duration: 3000 });
-    setTimeout(() => setSaved(false), 2500);
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await api.put("/profile", form);
+      setSaved(true);
+      toast.success("Profil berhasil diperbarui!", { duration: 3000 });
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan profil.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleSavePassword() {
@@ -125,11 +156,12 @@ export function ProfilePage() {
         {activeTab === "personal" && (
           <button
             onClick={handleSave}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm text-white font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+            disabled={saving || loadingProfile}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm text-white font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: "linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)", boxShadow: "0 4px 16px rgba(37,99,235,0.25)" }}
           >
-            {saved ? <CheckCircle size={15} /> : <Save size={15} />}
-            {saved ? "Tersimpan!" : "Simpan Perubahan"}
+            {saving ? <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : saved ? <CheckCircle size={15} /> : <Save size={15} />}
+            {saving ? "Menyimpan..." : saved ? "Tersimpan!" : "Simpan Perubahan"}
           </button>
         )}
       </div>
