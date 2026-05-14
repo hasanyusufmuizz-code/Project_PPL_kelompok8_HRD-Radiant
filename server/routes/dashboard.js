@@ -56,6 +56,37 @@ router.get("/", authMiddleware, async (req, res) => {
       [userId]
     );
 
+    // Jadwal berikutnya
+    let jadwalBerikutnya = null;
+    if (lamaran) {
+      const today = new Date().toISOString().slice(0, 10);
+      const [jadwalRows] = await conn.query(
+        `SELECT js.tanggal, js.waktu_mulai, js.waktu_selesai, js.lokasi, js.mode,
+                ts.nama AS nama_tahap
+         FROM peserta_jadwal pj
+         JOIN jadwal_seleksi js ON js.id = pj.jadwal_id
+         JOIN tahap_seleksi ts ON ts.id = js.tahap_id
+         WHERE pj.lamaran_id = ? AND js.tanggal >= ?
+         ORDER BY js.tanggal ASC LIMIT 1`,
+        [lamaran.id, today]
+      );
+      jadwalBerikutnya = jadwalRows[0] || null;
+    }
+
+    // Hasil terakhir
+    let hasilTerakhir = null;
+    if (lamaran) {
+      const [hasilRows] = await conn.query(
+        `SELECT hs.nilai, hs.status, ts.nama AS nama_tahap
+         FROM hasil_seleksi hs
+         JOIN tahap_seleksi ts ON ts.id = hs.tahap_id
+         WHERE hs.lamaran_id = ? AND hs.status IN ('lulus', 'tidak_lulus') AND hs.nilai IS NOT NULL
+         ORDER BY ts.urutan DESC LIMIT 1`,
+        [lamaran.id]
+      );
+      hasilTerakhir = hasilRows[0] || null;
+    }
+
     return res.json({
       user: {
         namaLengkap: profile?.nama_lengkap || "",
@@ -79,6 +110,23 @@ router.get("/", authMiddleware, async (req, res) => {
         isRead: n.is_read === 1,
         createdAt: n.created_at,
       })),
+      jadwalBerikutnya: jadwalBerikutnya
+        ? {
+            namaTahap: jadwalBerikutnya.nama_tahap,
+            tanggal: jadwalBerikutnya.tanggal,
+            waktuMulai: jadwalBerikutnya.waktu_mulai,
+            waktuSelesai: jadwalBerikutnya.waktu_selesai,
+            lokasi: jadwalBerikutnya.lokasi,
+            mode: jadwalBerikutnya.mode,
+          }
+        : null,
+      hasilTerakhir: hasilTerakhir
+        ? {
+            namaTahap: hasilTerakhir.nama_tahap,
+            nilai: hasilTerakhir.nilai,
+            status: hasilTerakhir.status,
+          }
+        : null,
     });
   } finally {
     conn.release();

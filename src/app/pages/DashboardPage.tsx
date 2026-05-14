@@ -35,6 +35,19 @@ interface DashboardData {
   lamaran: { id: number; status: string; tanggalDaftar: string; posisi: string } | null;
   steps: DashboardStep[];
   notifikasi: DashboardNotif[];
+  jadwalBerikutnya: {
+    namaTahap: string;
+    tanggal: string;
+    waktuMulai: string;
+    waktuSelesai: string;
+    lokasi: string | null;
+    mode: string | null;
+  } | null;
+  hasilTerakhir: {
+    namaTahap: string;
+    nilai: number;
+    status: string;
+  } | null;
 }
 
 const TAHAP_LABELS = [
@@ -52,6 +65,14 @@ const defaultSteps = TAHAP_LABELS.map((label) => ({
   nilai: null,
 }));
 
+function formatTime(t: string) {
+  return t ? t.slice(0, 5).replace(":", ".") : "";
+}
+function formatTanggal(d: string) {
+  if (!d) return "-";
+  return new Date(d).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -67,10 +88,22 @@ export function DashboardPage() {
   }, []);
 
   const nama = data?.user.namaLengkap || user?.namaLengkap || "Pengguna";
-  const posisi = data?.lamaran?.posisi || data?.user.posisi || "-";
   const steps = data?.steps.length ? data.steps : defaultSteps;
   const notifikasi = data?.notifikasi ?? [];
   const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  // Hitung progress stepper secara dinamis
+  const doneCount = steps.filter((s) => s.status === "lulus").length;
+  const activeStep = steps.find((s) => s.status === "proses");
+  const activeIdx = activeStep ? steps.indexOf(activeStep) : -1;
+  const progressPct = steps.length > 1
+    ? Math.round((doneCount / (steps.length - 1)) * 100)
+    : 0;
+  const tahapAktif = activeStep?.label || (doneCount === steps.length ? "Selesai" : null);
+
+  const jadwal = data?.jadwalBerikutnya;
+  const hasil = data?.hasilTerakhir;
+  const hasLamaran = !!data?.lamaran;
 
   if (loading) {
     return (
@@ -92,13 +125,15 @@ export function DashboardPage() {
             {today} • Pantau progress lamaran kamu di sini
           </p>
         </div>
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm"
-          style={{ background: "#FEF9C3", border: "1px solid #FDE047", color: "#92400E" }}
-        >
-          <Star size={14} fill="#FBBF24" color="#FBBF24" />
-          <span>Tahap Aktif: Micro Teaching</span>
-        </div>
+        {tahapAktif && (
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm"
+            style={{ background: "#FEF9C3", border: "1px solid #FDE047", color: "#92400E" }}
+          >
+            <Star size={14} fill="#FBBF24" color="#FBBF24" />
+            <span>Tahap Aktif: {tahapAktif}</span>
+          </div>
+        )}
       </div>
 
       {/* Progress Stepper */}
@@ -114,33 +149,27 @@ export function DashboardPage() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-slate-700">Progress Seleksi</h3>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <RefreshCw size={10} className="text-slate-400" />
-              <span className="text-slate-400" style={{ fontSize: "0.7rem" }}>
-                Diperbarui 5 menit lalu
-              </span>
-            </div>
+            {!hasLamaran && (
+              <p className="text-xs text-slate-400 mt-0.5">Belum ada lamaran aktif</p>
+            )}
           </div>
           <span
             className="text-xs px-2.5 py-1 rounded-full font-medium"
             style={{ background: "#EFF6FF", color: "#2563EB" }}
           >
-            Tahap 3 dari 5
+            {hasLamaran ? `Tahap ${doneCount + (activeStep ? 1 : 0)} dari ${steps.length}` : `0 dari ${steps.length}`}
           </span>
         </div>
 
         <div className="flex items-center justify-between relative">
           {/* Background line */}
-          <div
-            className="absolute top-5 left-0 right-0 h-0.5 z-0"
-            style={{ background: "#E2E8F0" }}
-          />
+          <div className="absolute top-5 left-0 right-0 h-0.5 z-0" style={{ background: "#E2E8F0" }} />
           {/* Progress line */}
           <div
             className="absolute top-5 left-0 h-0.5 z-0"
             style={{
               background: "linear-gradient(90deg, #2563EB, #3B82F6)",
-              width: "40%",
+              width: hasLamaran ? `${progressPct}%` : "0%",
               transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           />
@@ -149,42 +178,42 @@ export function DashboardPage() {
             const done = step.status === "lulus";
             const active = step.status === "proses";
             return (
-            <div key={idx} className="relative z-10 flex flex-col items-center gap-2">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
-                style={{
-                  background: done
-                    ? "linear-gradient(135deg, #2563EB, #3B82F6)"
-                    : active
-                    ? "white"
-                    : "#F1F5F9",
-                  border: active ? "2px solid #3B82F6" : "none",
-                  boxShadow: active
-                    ? "0 0 0 5px rgba(59,130,246,0.15), 0 4px 12px rgba(37,99,235,0.25)"
-                    : done
-                    ? "0 4px 12px rgba(37,99,235,0.28)"
-                    : "none",
-                }}
-              >
-                {done ? (
-                  <CheckCircle size={18} color="white" />
-                ) : active ? (
-                  <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
-                ) : (
-                  <div className="w-3 h-3 rounded-full" style={{ background: "#CBD5E1" }} />
-                )}
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-medium" style={{ color: done || active ? "#1E40AF" : "#94A3B8" }}>
-                  {step.label}
-                </p>
-                {step.nilai && (
-                  <p className="text-xs" style={{ color: "#3B82F6", fontSize: "0.65rem" }}>
-                    Nilai: {step.nilai}
+              <div key={idx} className="relative z-10 flex flex-col items-center gap-2">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300"
+                  style={{
+                    background: done
+                      ? "linear-gradient(135deg, #2563EB, #3B82F6)"
+                      : active
+                      ? "white"
+                      : "#F1F5F9",
+                    border: active ? "2px solid #3B82F6" : "none",
+                    boxShadow: active
+                      ? "0 0 0 5px rgba(59,130,246,0.15), 0 4px 12px rgba(37,99,235,0.25)"
+                      : done
+                      ? "0 4px 12px rgba(37,99,235,0.28)"
+                      : "none",
+                  }}
+                >
+                  {done ? (
+                    <CheckCircle size={18} color="white" />
+                  ) : active ? (
+                    <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                  ) : (
+                    <div className="w-3 h-3 rounded-full" style={{ background: "#CBD5E1" }} />
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium" style={{ color: done || active ? "#1E40AF" : "#94A3B8" }}>
+                    {step.label}
                   </p>
-                )}
+                  {step.nilai && (
+                    <p className="text-xs" style={{ color: "#3B82F6", fontSize: "0.65rem" }}>
+                      Nilai: {step.nilai}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
             );
           })}
         </div>
@@ -207,17 +236,25 @@ export function DashboardPage() {
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
                 <TrendingUp size={17} color="white" />
               </div>
-              <span
-                className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
-                style={{ background: "rgba(255,255,255,0.2)", color: "white" }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
-                Aktif
-              </span>
+              {hasLamaran && (
+                <span
+                  className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
+                  style={{ background: "rgba(255,255,255,0.2)", color: "white" }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+                  Aktif
+                </span>
+              )}
             </div>
             <p className="text-blue-100 text-xs mb-1">Status Saat Ini</p>
-            <h3 className="text-white text-base">Micro Teaching</h3>
-            <p className="text-blue-200 text-xs mt-1">Persiapkan materi terbaik kamu</p>
+            <h3 className="text-white text-base">{tahapAktif || (hasLamaran ? "Menunggu" : "Belum Melamar")}</h3>
+            <p className="text-blue-200 text-xs mt-1">
+              {hasLamaran
+                ? tahapAktif
+                  ? "Persiapkan materi terbaik kamu"
+                  : `${doneCount} tahap selesai`
+                : "Daftarkan lamaran kamu"}
+            </p>
             <button
               onClick={() => navigate("/status")}
               className="mt-4 flex items-center gap-1 text-xs text-white/80 hover:text-white transition-colors group"
@@ -239,29 +276,33 @@ export function DashboardPage() {
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "#EFF6FF" }}
-            >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#EFF6FF" }}>
               <Calendar size={17} color="#3B82F6" />
             </div>
-            <span
-              className="text-xs px-2.5 py-1 rounded-full font-medium"
-              style={{ background: "#FEF9C3", color: "#92400E" }}
-            >
-              Besok
-            </span>
+            {jadwal && (
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ background: "#FEF9C3", color: "#92400E" }}>
+                Segera
+              </span>
+            )}
           </div>
           <p className="text-slate-400 text-xs mb-1">Jadwal Berikutnya</p>
-          <h3 className="text-slate-700">Micro Teaching</h3>
-          <p className="text-slate-500 text-xs mt-1">Kamis, 10 April 2026</p>
-          <div
-            className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg w-fit"
-            style={{ background: "#F0FDF4" }}
-          >
-            <Clock size={11} color="#10B981" />
-            <span className="text-xs text-green-600">09.00 – 11.00 WIB</span>
-          </div>
+          {jadwal ? (
+            <>
+              <h3 className="text-slate-700">{jadwal.namaTahap}</h3>
+              <p className="text-slate-500 text-xs mt-1">{formatTanggal(jadwal.tanggal)}</p>
+              <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg w-fit" style={{ background: "#F0FDF4" }}>
+                <Clock size={11} color="#10B981" />
+                <span className="text-xs text-green-600">
+                  {formatTime(jadwal.waktuMulai)} – {formatTime(jadwal.waktuSelesai)} WIB
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-slate-400 text-sm">Belum ada jadwal</h3>
+              <p className="text-slate-400 text-xs mt-1">Jadwal akan muncul setelah admin menetapkannya</p>
+            </>
+          )}
           <button
             onClick={() => navigate("/jadwal")}
             className="mt-3 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition-colors group"
@@ -282,36 +323,47 @@ export function DashboardPage() {
           }}
         >
           <div className="flex items-center justify-between mb-4">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "#ECFDF5" }}
-            >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#ECFDF5" }}>
               <Award size={17} color="#10B981" />
             </div>
-            <span
-              className="text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1"
-              style={{ background: "#ECFDF5", color: "#065F46" }}
-            >
-              <CheckCircle size={10} />
-              Lulus
-            </span>
+            {hasil && (
+              <span
+                className="text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1"
+                style={{
+                  background: hasil.status === "lulus" ? "#ECFDF5" : "#FEF2F2",
+                  color: hasil.status === "lulus" ? "#065F46" : "#991B1B",
+                }}
+              >
+                <CheckCircle size={10} />
+                {hasil.status === "lulus" ? "Lulus" : "Tidak Lulus"}
+              </span>
+            )}
           </div>
           <p className="text-slate-400 text-xs mb-1">Hasil Terakhir</p>
-          <h3 className="text-slate-700">Tes Tulis</h3>
-          <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-green-600 font-semibold" style={{ fontSize: "1.5rem" }}>8.2</span>
-            <span className="text-slate-400 text-xs">/ 10.0</span>
-          </div>
-          <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: "82%",
-                background: "linear-gradient(90deg, #10B981, #34D399)",
-                transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-          </div>
+          {hasil ? (
+            <>
+              <h3 className="text-slate-700">{hasil.namaTahap}</h3>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-green-600 font-semibold" style={{ fontSize: "1.5rem" }}>{hasil.nilai}</span>
+                <span className="text-slate-400 text-xs">/ 10.0</span>
+              </div>
+              <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${(hasil.nilai / 10) * 100}%`,
+                    background: "linear-gradient(90deg, #10B981, #34D399)",
+                    transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-slate-400 text-sm">Belum ada nilai</h3>
+              <p className="text-slate-400 text-xs mt-1">Nilai akan muncul setelah tahap selesai dinilai</p>
+            </>
+          )}
           <button
             onClick={() => navigate("/hasil")}
             className="mt-3 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition-colors group"
@@ -337,12 +389,14 @@ export function DashboardPage() {
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
               <h3 className="text-slate-700">Notifikasi Terbaru</h3>
-              <span
-                className="w-5 h-5 rounded-full text-white flex items-center justify-center"
-                style={{ background: "#EF4444", fontSize: "0.625rem" }}
-              >
-                2
-              </span>
+              {notifikasi.filter((n) => !n.isRead).length > 0 && (
+                <span
+                  className="w-5 h-5 rounded-full text-white flex items-center justify-center"
+                  style={{ background: "#EF4444", fontSize: "0.625rem" }}
+                >
+                  {notifikasi.filter((n) => !n.isRead).length}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -351,9 +405,6 @@ export function DashboardPage() {
                   Baru saja
                 </span>
               </div>
-              <button className="text-xs text-blue-500 hover:text-blue-700 transition-colors">
-                Lihat semua
-              </button>
             </div>
           </div>
 
@@ -443,3 +494,4 @@ export function DashboardPage() {
     </div>
   );
 }
+
