@@ -7,20 +7,10 @@ import {
   ChevronDown,
   LogOut,
   User,
-  ClipboardList,
-  Calendar,
-  Trophy,
-  FileText,
-  GraduationCap,
 } from "lucide-react";
 
 const navItems = [
-  { path: "/dashboard",   label: "Dashboard",     icon: LayoutDashboard },
-  { path: "/status",      label: "Status Lamaran", icon: ClipboardList   },
-  { path: "/jadwal",      label: "Jadwal",         icon: Calendar        },
-  { path: "/hasil",       label: "Hasil",          icon: Trophy          },
-  { path: "/dokumen",     label: "Dokumen",        icon: FileText        },
-  { path: "/onboarding",  label: "Onboarding",     icon: GraduationCap   },
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
 export function Navbar() {
