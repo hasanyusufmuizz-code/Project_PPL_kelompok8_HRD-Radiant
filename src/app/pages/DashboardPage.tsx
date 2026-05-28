@@ -256,10 +256,10 @@ export function DashboardPage() {
                 : "Daftarkan lamaran kamu"}
             </p>
             <button
-              onClick={() => navigate("/status")}
+              onClick={() => navigate("/lowongan")}
               className="mt-4 flex items-center gap-1 text-xs text-white/80 hover:text-white transition-colors group"
             >
-              Lihat Tahapan Seleksi{" "}
+              Lihat Lowongan{" "}
               <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
           </div>
@@ -365,10 +365,10 @@ export function DashboardPage() {
             </>
           )}
           <button
-            onClick={() => navigate("/hasil")}
+            onClick={() => navigate("/berkas")}
             className="mt-3 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition-colors group"
           >
-            Lihat Detail Nilai{" "}
+            Upload Berkas{" "}
             <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
@@ -459,10 +459,10 @@ export function DashboardPage() {
           <h3 className="text-slate-700 mb-5">Menu Cepat</h3>
           <div className="space-y-2.5">
             {[
-              { icon: FileText, label: "Status Lamaran", sub: "Cek tahapan seleksi", path: "/status", color: "#3B82F6", bg: "#EFF6FF" },
-              { icon: BarChart2, label: "Hasil Tes", sub: "Lihat skor & nilai", path: "/hasil", color: "#10B981", bg: "#ECFDF5" },
-              { icon: Bell, label: "Jadwal Saya", sub: "Cek jadwal tes", path: "/jadwal", color: "#8B5CF6", bg: "#F5F3FF" },
-              { icon: BookOpen, label: "Onboarding", sub: "Materi & dokumen", path: "/onboarding", color: "#F59E0B", bg: "#FFFBEB" },
+              { icon: FileText, label: "Lowongan",      sub: "Lihat & daftar lowongan", path: "/lowongan", color: "#3B82F6", bg: "#EFF6FF" },
+              { icon: BarChart2, label: "Upload Berkas", sub: "Upload dokumen lamaran", path: "/berkas",   color: "#10B981", bg: "#ECFDF5" },
+              { icon: Bell, label: "Jadwal Saya",        sub: "Cek jadwal interview",   path: "/jadwal",   color: "#8B5CF6", bg: "#F5F3FF" },
+              { icon: BookOpen, label: "Profil Saya",    sub: "Edit data profilmu",     path: "/profil",   color: "#F59E0B", bg: "#FFFBEB" },
             ].map((item) => (
               <button
                 key={item.path}
