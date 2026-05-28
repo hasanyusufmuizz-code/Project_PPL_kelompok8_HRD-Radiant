@@ -26,7 +26,8 @@ export function LoginPage() {
           { email, password }
         );
         login(res.token, res.user);
-        navigate("/dashboard");
+        const isAdmin = res.user.role === "admin" || res.user.role === "hrd";
+        navigate(isAdmin ? "/admin/dashboard" : "/dashboard");
       } else {
         const res = await api.post<{ token: string; user: { id: number; email: string; namaLengkap: string; role: string; avatarUrl: string | null } }>(
           "/auth/register",

@@ -21,9 +21,11 @@ function PrivateRoute() {
 }
 
 function PublicOnlyRoute() {
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   if (loading) return null;
-  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Outlet />;
+  if (!isAuthenticated) return <Outlet />;
+  const isAdmin = user?.role === "admin" || user?.role === "hrd";
+  return <Navigate to={isAdmin ? "/admin/dashboard" : "/dashboard"} replace />;
 }
 
 function AdminRoute() {
