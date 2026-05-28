@@ -61,7 +61,7 @@ router.get("/", authMiddleware, async (req, res) => {
     if (lamaran) {
       const today = new Date().toISOString().slice(0, 10);
       const [jadwalRows] = await conn.query(
-        `SELECT js.tanggal, js.waktu_mulai, js.waktu_selesai, js.lokasi, js.mode,
+        `SELECT js.tanggal, js.waktu_mulai, js.waktu_selesai, js.lokasi, js.link_online,
                 ts.nama AS nama_tahap
          FROM peserta_jadwal pj
          JOIN jadwal_seleksi js ON js.id = pj.jadwal_id
@@ -117,7 +117,7 @@ router.get("/", authMiddleware, async (req, res) => {
             waktuMulai: jadwalBerikutnya.waktu_mulai,
             waktuSelesai: jadwalBerikutnya.waktu_selesai,
             lokasi: jadwalBerikutnya.lokasi,
-            mode: jadwalBerikutnya.mode,
+            linkOnline: jadwalBerikutnya.link_online,
           }
         : null,
       hasilTerakhir: hasilTerakhir

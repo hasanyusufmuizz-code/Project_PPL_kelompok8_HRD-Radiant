@@ -31,7 +31,7 @@ router.get("/", auth, async (req, res) => {
         js.waktu_mulai,
         js.waktu_selesai,
         js.lokasi,
-        js.mode
+        js.link_online
        FROM tahap_seleksi ts
        LEFT JOIN hasil_seleksi hs
          ON hs.tahap_id = ts.id AND hs.lamaran_id = ?
