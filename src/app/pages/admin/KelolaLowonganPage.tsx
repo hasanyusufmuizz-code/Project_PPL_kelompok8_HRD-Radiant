@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Briefcase, Users, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Briefcase, Users, Clock, FileText, Save } from "lucide-react";
 import { api } from "../../../lib/api";
 
 interface Lowongan {
@@ -14,7 +14,17 @@ interface Lowongan {
   created_at: string;
 }
 
+interface SyaratDok {
+  id: number;
+  lowongan_id: number;
+  nama_dokumen: string;
+  kode_dokumen: string;
+  deskripsi: string | null;
+  wajib: boolean;
+}
+
 const emptyForm = { posisi: "", deskripsi: "", persyaratan: "", kuota: 1, deadline: "", status: "aktif" as const };
+const emptySyarat = { nama_dokumen: "", kode_dokumen: "", deskripsi: "", wajib: true };
 
 function formatTgl(d: string) {
   return new Date(d).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
@@ -35,6 +45,16 @@ export function KelolaLowonganPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  // state syarat dokumen
+  const [syaratLowongan, setSyaratLowongan] = useState<Lowongan | null>(null);
+  const [syaratList, setSyaratList] = useState<SyaratDok[]>([]);
+  const [syaratLoading, setSyaratLoading] = useState(false);
+  const [showSyaratForm, setShowSyaratForm] = useState(false);
+  const [editSyaratId, setEditSyaratId] = useState<number | null>(null);
+  const [syaratForm, setSyaratForm] = useState({ ...emptySyarat });
+  const [savingSyarat, setSavingSyarat] = useState(false);
+  const [syaratError, setSyaratError] = useState("");
 
   const load = () => {
     setLoading(true);
@@ -96,6 +116,68 @@ export function KelolaLowonganPage() {
       load();
     } catch {
       alert("Gagal menghapus lowongan");
+    }
+  }
+
+  // ─── Syarat Dokumen ─────────────────────────────────────────────────────────
+
+  function openSyarat(l: Lowongan) {
+    setSyaratLowongan(l);
+    loadSyarat(l.id);
+  }
+
+  function loadSyarat(lowonganId: number) {
+    setSyaratLoading(true);
+    api.get<SyaratDok[]>(`/berkas/admin/syarat?lowongan_id=${lowonganId}`)
+      .then(setSyaratList)
+      .catch(() => {})
+      .finally(() => setSyaratLoading(false));
+  }
+
+  function openAddSyarat() {
+    setSyaratForm({ ...emptySyarat });
+    setEditSyaratId(null);
+    setSyaratError("");
+    setShowSyaratForm(true);
+  }
+
+  function openEditSyarat(s: SyaratDok) {
+    setSyaratForm({ nama_dokumen: s.nama_dokumen, kode_dokumen: s.kode_dokumen, deskripsi: s.deskripsi || "", wajib: s.wajib });
+    setEditSyaratId(s.id);
+    setSyaratError("");
+    setShowSyaratForm(true);
+  }
+
+  async function handleSaveSyarat() {
+    if (!syaratForm.nama_dokumen.trim() || !syaratForm.kode_dokumen.trim()) {
+      setSyaratError("Nama dan kode dokumen wajib diisi");
+      return;
+    }
+    if (!syaratLowongan) return;
+    setSavingSyarat(true);
+    setSyaratError("");
+    try {
+      if (editSyaratId) {
+        await api.put(`/berkas/admin/syarat/${editSyaratId}`, syaratForm);
+      } else {
+        await api.post("/berkas/admin/syarat", { ...syaratForm, lowongan_id: syaratLowongan.id });
+      }
+      setShowSyaratForm(false);
+      loadSyarat(syaratLowongan.id);
+    } catch (e: unknown) {
+      setSyaratError(e instanceof Error ? e.message : "Gagal menyimpan");
+    } finally {
+      setSavingSyarat(false);
+    }
+  }
+
+  async function handleDeleteSyarat(id: number) {
+    if (!syaratLowongan) return;
+    try {
+      await api.delete(`/berkas/admin/syarat/${id}`);
+      loadSyarat(syaratLowongan.id);
+    } catch {
+      alert("Gagal menghapus syarat dokumen");
     }
   }
 
@@ -182,6 +264,13 @@ export function KelolaLowonganPage() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2 justify-end">
                         <button
+                          onClick={() => openSyarat(l)}
+                          title="Kelola syarat dokumen khusus"
+                          className="p-2 rounded-lg hover:bg-amber-50 text-slate-400 hover:text-amber-600 transition-colors"
+                        >
+                          <FileText size={14} />
+                        </button>
+                        <button
                           onClick={() => openEdit(l)}
                           className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
                         >
@@ -203,7 +292,7 @@ export function KelolaLowonganPage() {
         )}
       </div>
 
-      {/* Form Modal */}
+      {/* Form Modal Lowongan */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}>
           <div className="w-full max-w-lg rounded-3xl p-6 space-y-4"
@@ -301,7 +390,7 @@ export function KelolaLowonganPage() {
         </div>
       )}
 
-      {/* Confirm Delete */}
+      {/* Confirm Delete Lowongan */}
       {deleteId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}>
           <div className="w-full max-w-sm rounded-3xl p-6 space-y-4 text-center" style={{ background: "white", boxShadow: "0 25px 60px rgba(0,0,0,0.15)" }}>
@@ -316,6 +405,126 @@ export function KelolaLowonganPage() {
               <button onClick={() => setDeleteId(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors">Batal</button>
               <button onClick={() => handleDelete(deleteId)} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors">Hapus</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Syarat Dokumen Khusus */}
+      {syaratLowongan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}>
+          <div className="w-full max-w-xl rounded-3xl p-6 space-y-4" style={{ background: "white", boxShadow: "0 25px 60px rgba(0,0,0,0.15)", maxHeight: "90vh", overflowY: "auto" }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Syarat Dokumen Khusus</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{syaratLowongan.posisi}</p>
+              </div>
+              <button onClick={() => { setSyaratLowongan(null); setShowSyaratForm(false); }} className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <X size={16} className="text-slate-400" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 p-3 rounded-xl" style={{ background: "#F8FAFC" }}>
+              Tambahkan dokumen khusus yang hanya diperlukan untuk posisi ini — misalnya skor IELTS untuk guru bahasa Inggris.
+              Dokumen ini akan muncul di halaman upload berkas pelamar yang melamar posisi ini.
+            </p>
+
+            {syaratLoading ? (
+              <div className="py-8 text-center text-slate-400 text-sm">Memuat...</div>
+            ) : syaratList.length === 0 ? (
+              <div className="py-6 text-center text-slate-400 text-sm">
+                <FileText size={32} className="mx-auto mb-2 opacity-30" />
+                <p>Belum ada syarat dokumen khusus</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {syaratList.map((s) => (
+                  <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "#F8FAFC" }}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-slate-700">{s.nama_dokumen}</p>
+                        {s.wajib
+                          ? <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "#FEF3C7", color: "#92400E" }}>Wajib</span>
+                          : <span className="px-1.5 py-0.5 rounded text-xs font-medium" style={{ background: "#F1F5F9", color: "#64748B" }}>Opsional</span>
+                        }
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">kode: <span className="font-mono">{s.kode_dokumen}</span></p>
+                      {s.deskripsi && <p className="text-xs text-slate-500 mt-0.5">{s.deskripsi}</p>}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button onClick={() => openEditSyarat(s)} className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors">
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => handleDeleteSyarat(s.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Form tambah/edit syarat */}
+            {showSyaratForm ? (
+              <div className="border border-slate-200 rounded-2xl p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-slate-700">{editSyaratId ? "Edit Syarat" : "Tambah Syarat Dokumen"}</h3>
+                {syaratError && <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{syaratError}</p>}
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Nama Dokumen *</label>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400"
+                    placeholder="e.g. Sertifikat IELTS"
+                    value={syaratForm.nama_dokumen}
+                    onChange={(e) => setSyaratForm({ ...syaratForm, nama_dokumen: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Kode Dokumen * <span className="font-normal text-slate-400">(huruf kecil, tanpa spasi)</span></label>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400 font-mono"
+                    placeholder="e.g. sertifikat_ielts"
+                    value={syaratForm.kode_dokumen}
+                    onChange={(e) => setSyaratForm({ ...syaratForm, kode_dokumen: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Deskripsi</label>
+                  <input
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400"
+                    placeholder="e.g. Skor minimum 6.0, PDF, max 5MB"
+                    value={syaratForm.deskripsi}
+                    onChange={(e) => setSyaratForm({ ...syaratForm, deskripsi: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="syarat-wajib"
+                    checked={syaratForm.wajib}
+                    onChange={(e) => setSyaratForm({ ...syaratForm, wajib: e.target.checked })}
+                    className="rounded"
+                  />
+                  <label htmlFor="syarat-wajib" className="text-sm text-slate-700">Wajib diupload</label>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setShowSyaratForm(false)} className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">Batal</button>
+                  <button
+                    onClick={handleSaveSyarat}
+                    disabled={savingSyarat}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-white text-sm font-medium disabled:opacity-60"
+                    style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)" }}
+                  >
+                    <Save size={13} /> {savingSyarat ? "Menyimpan..." : "Simpan"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={openAddSyarat}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-blue-200 text-blue-500 text-sm hover:bg-blue-50 transition-colors"
+              >
+                <Plus size={15} /> Tambah Syarat Dokumen
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -13,8 +13,8 @@ interface Berkas {
   created_at: string;
   nama_lengkap: string;
   email: string;
-  posisi_lowongan: string;
-  lamaran_id: number;
+  posisi_lowongan?: string;
+  lamaran_id?: number;
 }
 
 const JENIS_LABEL: Record<string, string> = {
@@ -39,7 +39,10 @@ function fmtSize(bytes: number) {
   return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+type Tab = "inti" | "lamaran";
+
 export function KelolaBerkasPage() {
+  const [tab, setTab] = useState<Tab>("inti");
   const [list, setList] = useState<Berkas[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterJenis, setFilterJenis] = useState("");
@@ -56,11 +59,20 @@ export function KelolaBerkasPage() {
     if (filterJenis) params.set("jenis", filterJenis);
     if (filterStatus) params.set("status", filterStatus);
     if (search) params.set("search", search);
-    api.get<Berkas[]>(`/berkas/admin?${params.toString()}`)
+    const endpoint = tab === "inti" ? `/berkas/admin/inti?${params}` : `/berkas/admin?${params}`;
+    api.get<Berkas[]>(endpoint)
       .then(setList)
       .catch(() => {})
       .finally(() => setLoading(false));
   };
+
+  useEffect(() => {
+    setList([]);
+    setFilterJenis("");
+    setFilterStatus("");
+    setSearch("");
+    load();
+  }, [tab]);
 
   useEffect(() => { load(); }, [filterJenis, filterStatus]);
 
@@ -73,7 +85,10 @@ export function KelolaBerkasPage() {
     if (!verifyTarget) return;
     setSaving(true);
     try {
-      await api.patch(`/berkas/admin/${verifyTarget.id}/verifikasi`, { status: verifyStatus, catatan: verifyNote });
+      const endpoint = tab === "inti"
+        ? `/berkas/admin/inti/${verifyTarget.id}/verifikasi`
+        : `/berkas/admin/${verifyTarget.id}/verifikasi`;
+      await api.patch(endpoint, { status: verifyStatus, catatan: verifyNote });
       setVerifyTarget(null);
       setVerifyNote("");
       load();
@@ -98,6 +113,24 @@ export function KelolaBerkasPage() {
       <div>
         <h1 className="text-2xl font-semibold text-slate-800">Kelola Berkas Pelamar</h1>
         <p className="text-sm text-slate-500 mt-1">Verifikasi dokumen yang diunggah pelamar</p>
+      </div>
+
+      {/* Tab */}
+      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: "#F1F5F9" }}>
+        {([["inti", "Berkas Inti"], ["lamaran", "Berkas Lamaran"]] as [Tab, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{
+              background: tab === key ? "white" : "transparent",
+              color: tab === key ? "#2563EB" : "#64748B",
+              boxShadow: tab === key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Filters */}
@@ -140,10 +173,11 @@ export function KelolaBerkasPage() {
 
       {/* Summary badges */}
       <div className="flex gap-3 flex-wrap">
-        {Object.values(STATUS_UI).map(({ label, bg, text }) => {
-          const count = list.filter((b) => b.status_verifikasi === Object.keys(STATUS_UI).find((k) => STATUS_UI[k as keyof typeof STATUS_UI].label === label)).length;
+        {(Object.keys(STATUS_UI) as Array<keyof typeof STATUS_UI>).map((k) => {
+          const { label, bg, text } = STATUS_UI[k];
+          const count = list.filter((b) => b.status_verifikasi === k).length;
           return (
-            <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: bg, color: text }}>
+            <div key={k} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: bg, color: text }}>
               {label}: {count}
             </div>
           );
@@ -158,7 +192,6 @@ export function KelolaBerkasPage() {
           <p>Belum ada berkas yang diunggah</p>
         </div>
       ) : (
-        /* Grouped by jenis dokumen */
         jenisList.map((jenis) => (
           <div key={jenis} className="rounded-2xl overflow-hidden"
             style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(147,197,253,0.2)", boxShadow: "0 2px 12px rgba(59,130,246,0.06)" }}>
@@ -171,7 +204,7 @@ export function KelolaBerkasPage() {
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(147,197,253,0.12)" }}>
                   <th className="text-left px-5 py-3 text-slate-500 font-medium">Pelamar</th>
-                  <th className="text-left px-5 py-3 text-slate-500 font-medium">Posisi</th>
+                  {tab === "lamaran" && <th className="text-left px-5 py-3 text-slate-500 font-medium">Posisi</th>}
                   <th className="text-left px-5 py-3 text-slate-500 font-medium">File</th>
                   <th className="text-left px-5 py-3 text-slate-500 font-medium">Ukuran</th>
                   <th className="text-left px-5 py-3 text-slate-500 font-medium">Status</th>
@@ -188,7 +221,9 @@ export function KelolaBerkasPage() {
                         <p className="font-medium text-slate-700">{b.nama_lengkap || b.email}</p>
                         <p className="text-xs text-slate-400">{b.email}</p>
                       </td>
-                      <td className="px-5 py-3.5 text-slate-600 text-xs">{b.posisi_lowongan}</td>
+                      {tab === "lamaran" && (
+                        <td className="px-5 py-3.5 text-slate-600 text-xs">{b.posisi_lowongan}</td>
+                      )}
                       <td className="px-5 py-3.5 text-slate-600 text-xs max-w-[150px] truncate">{b.nama_file}</td>
                       <td className="px-5 py-3.5 text-slate-500 text-xs">{fmtSize(b.ukuran_file)}</td>
                       <td className="px-5 py-3.5">
@@ -203,8 +238,7 @@ export function KelolaBerkasPage() {
                         <div className="flex items-center gap-1 justify-end">
                           <a
                             href={`http://localhost:3001${b.file_url}`}
-                            target="_blank"
-                            rel="noreferrer"
+                            target="_blank" rel="noreferrer"
                             className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-500 transition-colors"
                           >
                             <Eye size={14} />
@@ -239,7 +273,7 @@ export function KelolaBerkasPage() {
             <h2 className="text-lg font-semibold text-slate-800">Verifikasi Berkas</h2>
             <div className="p-3 rounded-xl bg-slate-50">
               <p className="text-sm font-medium text-slate-700">{verifyTarget.nama_lengkap}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{JENIS_LABEL[verifyTarget.jenis_dokumen]} — {verifyTarget.nama_file}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{JENIS_LABEL[verifyTarget.jenis_dokumen] || verifyTarget.jenis_dokumen} — {verifyTarget.nama_file}</p>
             </div>
             <div>
               <label className="text-xs font-medium text-slate-600 mb-2 block">Status Verifikasi</label>

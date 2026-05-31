@@ -309,16 +309,6 @@ export function LoginPage() {
                 </div>
               )}
             </form>
-
-            {/* Demo hint */}
-            <div
-              className="mt-6 p-3 rounded-xl text-center"
-              style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}
-            >
-              <p className="text-xs text-blue-600">
-                💡 Demo: Klik "Masuk" untuk mengakses portal kandidat
-              </p>
-            </div>
           </div>
         </div>
       </div>

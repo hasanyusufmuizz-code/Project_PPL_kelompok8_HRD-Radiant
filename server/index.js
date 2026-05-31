@@ -13,6 +13,7 @@ const adminJadwalRoutes = require("./routes/adminJadwal");
 const statusRoutes    = require("./routes/status");
 const hasilRoutes     = require("./routes/hasil");
 const tahapRoutes     = require("./routes/tahap");
+const pelamarRoutes   = require("./routes/pelamar");
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -33,6 +34,7 @@ app.use("/api/admin/jadwal", adminJadwalRoutes);
 app.use("/api/status",       statusRoutes);
 app.use("/api/hasil",        hasilRoutes);
 app.use("/api/tahap",        tahapRoutes);
+app.use("/api/pelamar",      pelamarRoutes);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 

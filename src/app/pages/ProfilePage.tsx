@@ -140,7 +140,7 @@ export function ProfilePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(-1)}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all duration-200"
             style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(147,197,253,0.3)" }}
           >
