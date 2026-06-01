@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, Clock, MapPin, Link2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Link2, CheckCircle, AlertCircle } from "lucide-react";
 import { api } from "../../lib/api";
 
 interface JadwalItem {
@@ -34,8 +34,17 @@ function fmtTgl(d: string) {
 }
 function fmtTime(t: string) { return t ? t.slice(0, 5) : ""; }
 
-function JadwalCard({ j }: { j: JadwalItem }) {
+function JadwalCard({
+  j,
+  onConfirm,
+  confirming,
+}: {
+  j: JadwalItem;
+  onConfirm?: (id: number) => void;
+  confirming?: boolean;
+}) {
   const hadir = HADIR_UI[j.status_hadir as keyof typeof HADIR_UI] ?? HADIR_UI.terdaftar;
+  const bisaKonfirmasi = onConfirm && j.status_hadir === "terdaftar";
 
   return (
     <div className="rounded-2xl p-5 transition-all hover:shadow-md"
@@ -80,6 +89,24 @@ function JadwalCard({ j }: { j: JadwalItem }) {
           {j.keterangan && (
             <p className="text-xs text-slate-400 mt-2 p-2.5 rounded-lg bg-slate-50">{j.keterangan}</p>
           )}
+
+          {/* Konfirmasi kehadiran */}
+          {bisaKonfirmasi && (
+            <button
+              onClick={() => onConfirm!(j.id)}
+              disabled={confirming}
+              className="mt-3 flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm text-white font-medium transition-all disabled:opacity-60"
+              style={{ background: "linear-gradient(135deg,#10B981,#34D399)" }}
+            >
+              <CheckCircle size={14} />
+              {confirming ? "Menyimpan..." : "Konfirmasi Hadir / Selesai"}
+            </button>
+          )}
+          {j.status_hadir === "hadir" && (
+            <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: "#F0FDF4", color: "#065F46" }}>
+              <CheckCircle size={13} /> Kehadiran terkonfirmasi — menunggu hasil dari HRD
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -90,13 +117,33 @@ export function JadwalPage() {
   const [upcoming, setUpcoming] = useState<JadwalItem[]>([]);
   const [past, setPast] = useState<JadwalItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const loadJadwal = () => {
+    return api.get<{ upcoming: JadwalItem[]; past: JadwalItem[] }>("/jadwal")
+      .then((d) => { setUpcoming(d.upcoming); setPast(d.past); })
+      .catch(() => {});
+  };
 
   useEffect(() => {
-    api.get<{ upcoming: JadwalItem[]; past: JadwalItem[] }>("/jadwal")
-      .then((d) => { setUpcoming(d.upcoming); setPast(d.past); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    loadJadwal().finally(() => setLoading(false));
   }, []);
+
+  async function handleConfirm(id: number) {
+    setConfirmingId(id);
+    try {
+      await api.patch(`/jadwal/${id}/konfirmasi-hadir`, {});
+      await loadJadwal();
+      setToast("Kehadiran dikonfirmasi. HRD akan segera menilai.");
+      setTimeout(() => setToast(null), 3500);
+    } catch (e: unknown) {
+      setToast((e as Error).message || "Gagal mengonfirmasi.");
+      setTimeout(() => setToast(null), 3500);
+    } finally {
+      setConfirmingId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -109,7 +156,12 @@ export function JadwalPage() {
   const noData = upcoming.length === 0 && past.length === 0;
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 space-y-6">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 space-y-6">
+      {toast && (
+        <div className="fixed top-5 right-5 z-[100] px-5 py-3 rounded-2xl text-sm text-white shadow-xl" style={{ background: "#10B981" }}>
+          {toast}
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-semibold text-slate-800">Jadwal Interview</h1>
         <p className="text-sm text-slate-500 mt-1">Jadwal tes dan wawancara seleksimu</p>
@@ -138,7 +190,9 @@ export function JadwalPage() {
                 </span>
               </div>
               <div className="space-y-3">
-                {upcoming.map((j) => <JadwalCard key={j.id} j={j} />)}
+                {upcoming.map((j) => (
+                  <JadwalCard key={j.id} j={j} onConfirm={handleConfirm} confirming={confirmingId === j.id} />
+                ))}
               </div>
             </div>
           )}
@@ -154,7 +208,9 @@ export function JadwalPage() {
                 </span>
               </div>
               <div className="space-y-3 opacity-70">
-                {past.map((j) => <JadwalCard key={j.id} j={j} />)}
+                {past.map((j) => (
+                  <JadwalCard key={j.id} j={j} onConfirm={handleConfirm} confirming={confirmingId === j.id} />
+                ))}
               </div>
             </div>
           )}

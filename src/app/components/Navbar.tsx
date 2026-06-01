@@ -10,6 +10,8 @@ import {
   Briefcase,
   FileStack,
   Calendar,
+  Menu,
+  X,
 } from "lucide-react";
 
 const navItems = [
@@ -21,6 +23,7 @@ const navItems = [
 
 export function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const initial = user?.namaLengkap?.[0]?.toUpperCase() ?? "U";
@@ -36,9 +39,9 @@ export function Navbar() {
         boxShadow: "0 2px 20px rgba(59,130,246,0.07)",
       }}
     >
-      <div className="max-w-[1440px] mx-auto h-full px-6 flex items-center justify-between">
+      <div className="max-w-[1440px] mx-auto h-full px-4 sm:px-6 flex items-center justify-between gap-3">
         {/* Logo */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-shrink-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
             style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)" }}
@@ -50,8 +53,8 @@ export function Navbar() {
           </span>
         </div>
 
-        {/* Nav Links */}
-        <div className="flex items-center gap-0.5">
+        {/* Nav Links — desktop */}
+        <div className="hidden md:flex items-center gap-0.5">
           {navItems.map(({ path, label, icon: Icon }) => (
             <NavLink
               key={path}
@@ -86,23 +89,23 @@ export function Navbar() {
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           <div className="relative">
             <button
               onClick={() => setShowProfile(!showProfile)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-all duration-200"
+              className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-all duration-200"
               style={{ border: "1px solid transparent" }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.border = "1px solid rgba(147,197,253,0.3)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.border = "1px solid transparent"; }}
             >
               <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-medium"
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
                 style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)" }}
               >
                 {initial}
               </div>
-              <span className="text-sm text-slate-700 font-medium">{user?.namaLengkap || user?.email || "Pengguna"}</span>
-              <ChevronDown size={13} className="text-slate-400" />
+              <span className="hidden sm:inline text-sm text-slate-700 font-medium max-w-[140px] truncate">{user?.namaLengkap || user?.email || "Pengguna"}</span>
+              <ChevronDown size={13} className="hidden sm:block text-slate-400" />
             </button>
 
             {showProfile && (
@@ -130,8 +133,48 @@ export function Navbar() {
               </div>
             )}
           </div>
+
+          {/* Hamburger — mobile */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-xl hover:bg-slate-100 transition-colors text-slate-500"
+            aria-label="Menu"
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu panel */}
+      {mobileOpen && (
+        <div
+          className="md:hidden px-4 pb-3 pt-1 space-y-1"
+          style={{
+            background: "rgba(255,255,255,0.97)",
+            backdropFilter: "blur(24px)",
+            borderBottom: "1px solid rgba(147,197,253,0.3)",
+            boxShadow: "0 8px 24px rgba(59,130,246,0.08)",
+          }}
+        >
+          {navItems.map(({ path, label, icon: Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
+                  isActive
+                    ? "text-blue-600 bg-blue-50 font-medium"
+                    : "text-slate-500 hover:text-blue-600 hover:bg-blue-50/70"
+                }`
+              }
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }

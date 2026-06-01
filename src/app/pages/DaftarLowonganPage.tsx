@@ -38,18 +38,16 @@ export function DaftarLowonganPage() {
   const [successId, setSuccessId] = useState<number | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      api.get<Lowongan[]>("/lowongan"),
-      api.get<{ lamaran: LamaranSaya[] }>("/berkas").then((d) => d.lamaran ? [{ lowongan_id: (d.lamaran as unknown as { id: number }).id, status: "pending" }] : []).catch(() => []),
-    ]).then(([low]) => {
-      setList(low);
-    }).catch(() => {}).finally(() => setLoading(false));
+    api.get<Lowongan[]>("/lowongan")
+      .then(setList)
+      .catch(() => {})
+      .finally(() => setLoading(false));
 
-    // Cek lamaran yang sudah ada via berkas endpoint
-    api.get<{ lamaran: { id: number; posisi: string } | null }>("/berkas")
+    // Ambil lamaran aktif user (lowongan_id yang benar)
+    api.get<{ lamaran: { id: number; lowongan_id: number; posisi: string } | null }>("/berkas")
       .then((d) => {
         if (d.lamaran) {
-          setLamaranSaya([{ lowongan_id: d.lamaran.id, status: "pending" }]);
+          setLamaranSaya([{ lowongan_id: d.lamaran.lowongan_id, status: "pending" }]);
         }
       })
       .catch(() => {});
@@ -80,13 +78,13 @@ export function DaftarLowonganPage() {
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Lowongan Tersedia</h1>
           <p className="text-sm text-slate-500 mt-1">Temukan posisi pengajar yang sesuai dengan keahlianmu</p>
         </div>
-        <span className="px-3 py-1.5 rounded-full text-sm font-medium" style={{ background: "#EFF6FF", color: "#2563EB" }}>
+        <span className="px-3 py-1.5 rounded-full text-sm font-medium w-fit" style={{ background: "#EFF6FF", color: "#2563EB" }}>
           {list.length} lowongan aktif
         </span>
       </div>

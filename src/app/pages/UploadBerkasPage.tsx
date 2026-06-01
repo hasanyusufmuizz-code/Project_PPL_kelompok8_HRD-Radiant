@@ -218,10 +218,10 @@ export function UploadBerkasPage() {
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 space-y-0">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 space-y-0">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-semibold text-slate-800">Upload Dokumen</h1>
             <p className="text-sm text-slate-500 mt-1">Upload dokumen yang diperlukan untuk proses seleksi</p>
@@ -242,7 +242,7 @@ export function UploadBerkasPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_320px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         <div className="space-y-6">
           {/* Berkas Inti */}
           <div>

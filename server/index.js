@@ -14,6 +14,8 @@ const statusRoutes    = require("./routes/status");
 const hasilRoutes     = require("./routes/hasil");
 const tahapRoutes     = require("./routes/tahap");
 const pelamarRoutes   = require("./routes/pelamar");
+const usersRoutes     = require("./routes/users");
+const notifikasiRoutes = require("./routes/notifikasi");
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +37,8 @@ app.use("/api/status",       statusRoutes);
 app.use("/api/hasil",        hasilRoutes);
 app.use("/api/tahap",        tahapRoutes);
 app.use("/api/pelamar",      pelamarRoutes);
+app.use("/api/admin/users",  usersRoutes);
+app.use("/api/notifikasi",   notifikasiRoutes);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 

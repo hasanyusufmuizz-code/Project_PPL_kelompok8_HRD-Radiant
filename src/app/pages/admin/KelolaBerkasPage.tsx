@@ -200,7 +200,8 @@ export function KelolaBerkasPage() {
               <h3 className="font-semibold text-slate-700 text-sm">{JENIS_LABEL[jenis] || jenis}</h3>
               <span className="ml-auto text-xs text-slate-400">{grouped[jenis].length} berkas</span>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[640px]">
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(147,197,253,0.12)" }}>
                   <th className="text-left px-5 py-3 text-slate-500 font-medium">Pelamar</th>
@@ -262,6 +263,7 @@ export function KelolaBerkasPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         ))
       )}

@@ -115,7 +115,7 @@ export function AdminPelamarPage() {
       </div>
 
       {/* Status summary */}
-      <div className="grid grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map(s => (
           <button
             key={s.key}
@@ -180,7 +180,8 @@ export function AdminPelamarPage() {
             <p>Belum ada pelamar</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr style={{ background: "#F8FAFC", borderBottom: "1px solid rgba(147,197,253,0.2)" }}>
                 <th className="text-left px-5 py-3.5 text-slate-500 font-medium">Pelamar</th>
@@ -238,6 +239,7 @@ export function AdminPelamarPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

@@ -66,8 +66,20 @@ router.post("/daftar", auth, async (req, res) => {
       `INSERT INTO lamaran (user_id, lowongan_id, status) VALUES (?, ?, 'pending')`,
       [req.user.id, lowonganId]
     );
+    const lamaranId = result.insertId;
 
-    res.status(201).json({ success: true, lamaranId: result.insertId });
+    // Otomatis masukkan ke tahap 1 (Pendaftaran & Administrasi) dengan status proses
+    const [tahap1] = await db.query(
+      `SELECT id FROM tahap_seleksi ORDER BY urutan ASC LIMIT 1`
+    );
+    if (tahap1.length) {
+      await db.query(
+        `INSERT INTO hasil_seleksi (lamaran_id, tahap_id, status) VALUES (?, ?, 'proses')`,
+        [lamaranId, tahap1[0].id]
+      );
+    }
+
+    res.status(201).json({ success: true, lamaranId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

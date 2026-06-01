@@ -41,7 +41,7 @@ interface DashboardData {
     waktuMulai: string;
     waktuSelesai: string;
     lokasi: string | null;
-    mode: string | null;
+    linkOnline: string | null;
   } | null;
   hasilTerakhir: {
     namaTahap: string;
@@ -114,9 +114,9 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 space-y-6">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 space-y-6">
       {/* Header Welcome */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-slate-800 mb-1" style={{ fontSize: "1.5rem" }}>
             Halo, {nama} 👋
@@ -161,7 +161,8 @@ export function DashboardPage() {
           </span>
         </div>
 
-        <div className="flex items-center justify-between relative">
+        {/* Stepper horizontal — tablet & desktop */}
+        <div className="hidden sm:flex items-center justify-between relative">
           {/* Background line */}
           <div className="absolute top-5 left-0 right-0 h-0.5 z-0" style={{ background: "#E2E8F0" }} />
           {/* Progress line */}
@@ -217,10 +218,65 @@ export function DashboardPage() {
             );
           })}
         </div>
+
+        {/* Stepper vertical — mobile */}
+        <div className="sm:hidden">
+          {steps.map((step, idx) => {
+            const done = step.status === "lulus";
+            const active = step.status === "proses";
+            const isLast = idx === steps.length - 1;
+            return (
+              <div key={idx} className="flex gap-3">
+                <div className="flex flex-col items-center">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300"
+                    style={{
+                      background: done
+                        ? "linear-gradient(135deg, #2563EB, #3B82F6)"
+                        : active
+                        ? "white"
+                        : "#F1F5F9",
+                      border: active ? "2px solid #3B82F6" : "none",
+                      boxShadow: active
+                        ? "0 0 0 4px rgba(59,130,246,0.15)"
+                        : done
+                        ? "0 4px 12px rgba(37,99,235,0.25)"
+                        : "none",
+                    }}
+                  >
+                    {done ? (
+                      <CheckCircle size={16} color="white" />
+                    ) : active ? (
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    ) : (
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#CBD5E1" }} />
+                    )}
+                  </div>
+                  {!isLast && (
+                    <div
+                      className="w-0.5 flex-1"
+                      style={{ minHeight: "20px", background: done ? "#3B82F6" : "#E2E8F0" }}
+                    />
+                  )}
+                </div>
+                <div className={isLast ? "pt-1.5" : "pt-1.5 pb-3"}>
+                  <p className="text-sm font-medium" style={{ color: done || active ? "#1E40AF" : "#64748B" }}>
+                    {step.label}
+                  </p>
+                  {step.nilai && (
+                    <p className="text-xs mt-0.5" style={{ color: "#3B82F6" }}>
+                      Nilai: {step.nilai}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Current Status */}
         <div
           className="rounded-3xl p-5 relative overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl"
@@ -375,10 +431,10 @@ export function DashboardPage() {
       </div>
 
       {/* Notifications + Quick Actions */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Notifications Panel */}
         <div
-          className="col-span-2 rounded-3xl p-6 transition-all duration-200 hover:shadow-lg"
+          className="lg:col-span-2 rounded-3xl p-6 transition-all duration-200 hover:shadow-lg"
           style={{
             background: "rgba(255,255,255,0.8)",
             backdropFilter: "blur(20px)",

@@ -184,14 +184,14 @@ export function KelolaLowonganPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Kelola Lowongan</h1>
           <p className="text-sm text-slate-500 mt-1">Buat, edit, dan kelola lowongan pengajar</p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90 active:scale-95"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90 active:scale-95"
           style={{ background: "linear-gradient(135deg, #2563EB, #3B82F6)", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
         >
           <Plus size={16} /> Buat Lowongan
@@ -199,7 +199,7 @@ export function KelolaLowonganPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Total Lowongan", val: list.length, icon: Briefcase, color: "#3B82F6", bg: "#EFF6FF" },
           { label: "Lowongan Aktif",  val: list.filter(l => l.status === "aktif").length, icon: Clock, color: "#10B981", bg: "#ECFDF5" },
@@ -229,7 +229,8 @@ export function KelolaLowonganPage() {
             <p>Belum ada lowongan. Buat lowongan pertama!</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr style={{ background: "#F8FAFC", borderBottom: "1px solid rgba(147,197,253,0.2)" }}>
                 <th className="text-left px-5 py-3.5 text-slate-500 font-medium">Posisi</th>
@@ -289,6 +290,7 @@ export function KelolaLowonganPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
