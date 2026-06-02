@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   UserCog,
+  BadgeCheck,
 } from "lucide-react";
 
 const adminNav = [
@@ -23,6 +24,7 @@ const adminNav = [
   { path: "/admin/berkas",     label: "Kelola Berkas",   icon: FileStack       },
   { path: "/admin/jadwal",     label: "Jadwal Interview", icon: Calendar       },
   { path: "/admin/pelamar",    label: "Data Pelamar",    icon: Users           },
+  { path: "/admin/approval",   label: "Approval Kandidat",icon: BadgeCheck     },
   { path: "/admin/users",      label: "Kelola User",     icon: UserCog         },
 ];
 

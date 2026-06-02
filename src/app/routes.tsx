@@ -13,6 +13,7 @@ import { KelolaLowonganPage } from "./pages/admin/KelolaLowonganPage";
 import { KelolaBerkasPage } from "./pages/admin/KelolaBerkasPage";
 import { AdminJadwalPage } from "./pages/admin/AdminJadwalPage";
 import { AdminPelamarPage } from "./pages/admin/AdminPelamarPage";
+import { ApprovalKandidatPage } from "./pages/admin/ApprovalKandidatPage";
 import { KelolaUserPage } from "./pages/admin/KelolaUserPage";
 import { useAuth } from "./context/AuthContext";
 
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
           { path: "berkas",      Component: KelolaBerkasPage    },
           { path: "jadwal",      Component: AdminJadwalPage     },
           { path: "pelamar",     Component: AdminPelamarPage    },
+          { path: "approval",    Component: ApprovalKandidatPage},
           { path: "users",       Component: KelolaUserPage      },
           { path: "profil",      Component: ProfilePage         },
         ],

@@ -270,7 +270,25 @@ CREATE TABLE IF NOT EXISTS onboarding_checklist (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- 14. LAPORAN (Admin: Laporan & Statistik)
+-- 14. KEPUTUSAN KANDIDAT (Approval/Kelulusan Final)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS keputusan_kandidat (
+  id                  INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  lamaran_id          INT UNSIGNED    NOT NULL UNIQUE,
+  diputuskan_oleh     INT UNSIGNED    NOT NULL,
+  keputusan           ENUM('diterima','ditolak') NOT NULL,
+  alasan              TEXT            NULL,
+  tanggal_keputusan   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  INDEX idx_keputusan_lamaran (lamaran_id),
+  INDEX idx_keputusan_penilai (diputuskan_oleh),
+  CONSTRAINT fk_keputusan_lamaran FOREIGN KEY (lamaran_id) REFERENCES lamaran(id) ON DELETE CASCADE,
+  CONSTRAINT fk_keputusan_penilai FOREIGN KEY (diputuskan_oleh) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 15. LAPORAN (Admin: Laporan & Statistik)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS laporan (
   id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
