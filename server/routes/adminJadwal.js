@@ -9,7 +9,7 @@ router.get("/", adminAuth, async (_req, res) => {
     const [rows] = await db.query(
       `SELECT js.id, js.jenis, js.tanggal, js.waktu_mulai, js.waktu_selesai,
               js.lokasi, js.link_online, js.keterangan,
-              ts.nama AS nama_tahap,
+              js.tahap_id, ts.nama AS nama_tahap,
               low.posisi AS posisi_lowongan, low.id AS lowongan_id,
               COUNT(pj.id) AS jumlah_peserta
        FROM jadwal_seleksi js
@@ -100,7 +100,7 @@ router.delete("/:id", adminAuth, async (req, res) => {
   }
 });
 
-// POST /api/admin/jadwal/:id/tambah-peserta — tambah peserta ke jadwal
+// POST /api/admin/jadwal/:id/tambah-peserta — tambah peserta ke jadwal + kirim notifikasi
 router.post("/:id/tambah-peserta", adminAuth, async (req, res) => {
   const { lamaranId } = req.body;
   if (!lamaranId) return res.status(400).json({ error: "lamaranId wajib" });
@@ -110,6 +110,36 @@ router.post("/:id/tambah-peserta", adminAuth, async (req, res) => {
       `INSERT IGNORE INTO peserta_jadwal (jadwal_id, lamaran_id) VALUES (?, ?)`,
       [req.params.id, lamaranId]
     );
+
+    // Kirim notifikasi ke pelamar
+    const [[jadwal]] = await db.query(
+      `SELECT js.tanggal, js.waktu_mulai, js.jenis, ts.nama AS nama_tahap
+       FROM jadwal_seleksi js
+       JOIN tahap_seleksi ts ON ts.id = js.tahap_id
+       WHERE js.id = ?`,
+      [req.params.id]
+    );
+    const [[lamaran]] = await db.query(
+      "SELECT user_id FROM lamaran WHERE id = ?",
+      [lamaranId]
+    );
+
+    if (jadwal && lamaran) {
+      const tgl = new Date(jadwal.tanggal).toLocaleDateString("id-ID", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+      });
+      const jam = jadwal.waktu_mulai ? jadwal.waktu_mulai.slice(0, 5) : "";
+      await db.query(
+        "INSERT INTO notifikasi (user_id, judul, pesan, tipe) VALUES (?, ?, ?, ?)",
+        [
+          lamaran.user_id,
+          `Jadwal ${jadwal.nama_tahap} Telah Ditetapkan`,
+          `Anda terdaftar sebagai peserta ${jadwal.jenis} pada ${tgl} pukul ${jam} WIB. Cek halaman Jadwal untuk detail lengkap.`,
+          "info",
+        ]
+      );
+    }
+
     res.status(201).json({ success: true });
   } catch (err) {
     console.error(err);

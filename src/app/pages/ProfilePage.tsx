@@ -121,7 +121,7 @@ export function ProfilePage() {
     }
   }
 
-  function handleSavePassword() {
+  async function handleSavePassword() {
     if (passwordForm.passwordBaru !== passwordForm.konfirmasiPassword) {
       toast.error("Password baru tidak cocok!");
       return;
@@ -130,17 +130,25 @@ export function ProfilePage() {
       toast.error("Password minimal 8 karakter!");
       return;
     }
-    toast.success("Password berhasil diperbarui!");
-    setPasswordForm({ passwordLama: "", passwordBaru: "", konfirmasiPassword: "" });
+    try {
+      await api.put("/profile/password", {
+        passwordLama: passwordForm.passwordLama,
+        passwordBaru: passwordForm.passwordBaru,
+      });
+      toast.success("Password berhasil diperbarui!");
+      setPasswordForm({ passwordLama: "", passwordBaru: "", konfirmasiPassword: "" });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengubah password.");
+    }
   }
 
   return (
-    <div className="max-w-[1440px] mx-auto px-6 space-y-6">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate(-1)}
             className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all duration-200"
             style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(147,197,253,0.3)" }}
           >
@@ -198,9 +206,9 @@ export function ProfilePage() {
       </div>
 
       {activeTab === "personal" && (
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left - Avatar Card */}
-          <div className="col-span-1 space-y-5">
+          <div className="lg:col-span-1 space-y-5">
             {/* Avatar */}
             <div style={cardStyle}>
               <div className="flex flex-col items-center text-center">
@@ -269,7 +277,7 @@ export function ProfilePage() {
           </div>
 
           {/* Right - Form */}
-          <div className="col-span-2 space-y-5">
+          <div className="lg:col-span-2 space-y-5">
             {/* Personal Info */}
             <div style={cardStyle}>
               <div className="flex items-center gap-2 mb-5">
@@ -282,7 +290,7 @@ export function ProfilePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label style={labelStyle}>Nama Lengkap</label>
                   <input
@@ -339,7 +347,7 @@ export function ProfilePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label style={labelStyle}>Posisi yang Dilamar</label>
                   <div className="relative">
@@ -366,7 +374,7 @@ export function ProfilePage() {
                     />
                   </div>
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label style={labelStyle}>Institusi Pendidikan</label>
                   <input
                     style={inputStyle}

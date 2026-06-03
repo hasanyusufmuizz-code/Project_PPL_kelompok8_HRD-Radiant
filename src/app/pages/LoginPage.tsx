@@ -23,7 +23,7 @@ export function LoginPage() {
       if (isLogin) {
         const res = await api.post<{ token: string; user: { id: number; email: string; namaLengkap: string; role: string; avatarUrl: string | null } }>(
           "/auth/login",
-          { email, password }
+          { email: email.trim(), password: password.trim() }
         );
         login(res.token, res.user);
         const isAdmin = res.user.role === "admin" || res.user.role === "hrd";
@@ -31,7 +31,7 @@ export function LoginPage() {
       } else {
         const res = await api.post<{ token: string; user: { id: number; email: string; namaLengkap: string; role: string; avatarUrl: string | null } }>(
           "/auth/register",
-          { namaLengkap: name, email, password }
+          { namaLengkap: name.trim(), email: email.trim(), password }
         );
         login(res.token, res.user);
         navigate("/dashboard");
@@ -309,16 +309,6 @@ export function LoginPage() {
                 </div>
               )}
             </form>
-
-            {/* Demo hint */}
-            <div
-              className="mt-6 p-3 rounded-xl text-center"
-              style={{ background: "#EFF6FF", border: "1px solid #BFDBFE" }}
-            >
-              <p className="text-xs text-blue-600">
-                💡 Demo: Klik "Masuk" untuk mengakses portal kandidat
-              </p>
-            </div>
           </div>
         </div>
       </div>

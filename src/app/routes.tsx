@@ -12,6 +12,8 @@ import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { KelolaLowonganPage } from "./pages/admin/KelolaLowonganPage";
 import { KelolaBerkasPage } from "./pages/admin/KelolaBerkasPage";
 import { AdminJadwalPage } from "./pages/admin/AdminJadwalPage";
+import { AdminPelamarPage } from "./pages/admin/AdminPelamarPage";
+import { KelolaUserPage } from "./pages/admin/KelolaUserPage";
 import { useAuth } from "./context/AuthContext";
 
 function PrivateRoute() {
@@ -75,6 +77,9 @@ export const router = createBrowserRouter([
           { path: "lowongan",    Component: KelolaLowonganPage  },
           { path: "berkas",      Component: KelolaBerkasPage    },
           { path: "jadwal",      Component: AdminJadwalPage     },
+          { path: "pelamar",     Component: AdminPelamarPage    },
+          { path: "users",       Component: KelolaUserPage      },
+          { path: "profil",      Component: ProfilePage         },
         ],
       },
     ],

@@ -2,6 +2,7 @@
 -- DATABASE SCHEMA: HRD SDM Management Bimbel Radiant
 -- Kelompok 8 | PPL
 -- Dibuat: 2026-05-14
+-- Diperbarui: 2026-05-31 (disesuaikan dengan database yang sedang digunakan)
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS hrd_radiant
@@ -173,7 +174,7 @@ CREATE TABLE IF NOT EXISTS peserta_jadwal (
 CREATE TABLE IF NOT EXISTS dokumen_lamaran (
   id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
   lamaran_id    INT UNSIGNED    NOT NULL,
-  jenis_dokumen ENUM('cv','surat_lamaran','transkrip_nilai','ijazah','foto','ktp','sertifikat','lainnya') NOT NULL,
+  jenis_dokumen VARCHAR(100)    NOT NULL COMMENT 'cv, surat_lamaran, transkrip_nilai, ijazah, foto, ktp, atau kode dokumen khusus per lowongan',
   nama_file     VARCHAR(255)    NOT NULL,
   file_url      VARCHAR(500)    NOT NULL,
   ukuran_file   INT UNSIGNED    NULL COMMENT 'dalam bytes',
@@ -288,7 +289,46 @@ CREATE TABLE IF NOT EXISTS laporan (
 ) ENGINE=InnoDB;
 
 -- ============================================================
--- 15. SESSION TOKENS (untuk autentikasi stateless)
+-- 15. BERKAS INTI (Dokumen core pelamar, tidak terikat lamaran)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS berkas_inti (
+  id                  INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  user_id             INT UNSIGNED    NOT NULL,
+  jenis_dokumen       VARCHAR(100)    NOT NULL,
+  nama_file           VARCHAR(255)    NOT NULL,
+  file_url            VARCHAR(500)    NOT NULL,
+  ukuran_file         INT UNSIGNED    NULL COMMENT 'dalam bytes',
+  status_verifikasi   ENUM('belum_diproses','terverifikasi','ditolak') NOT NULL DEFAULT 'belum_diproses',
+  catatan_verifikasi  TEXT            NULL,
+  diverifikasi_oleh   INT UNSIGNED    NULL,
+  diverifikasi_pada   DATETIME        NULL,
+  created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_user_jenis (user_id, jenis_dokumen),
+  INDEX idx_berkas_inti_user (user_id),
+  CONSTRAINT fk_berkas_inti_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_berkas_inti_verifikator FOREIGN KEY (diverifikasi_oleh) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 16. SYARAT DOKUMEN KHUSUS PER LOWONGAN (Admin configurable)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS syarat_dokumen_lowongan (
+  id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  lowongan_id   INT UNSIGNED    NOT NULL,
+  nama_dokumen  VARCHAR(255)    NOT NULL COMMENT 'e.g. Skor IELTS',
+  kode_dokumen  VARCHAR(100)    NOT NULL COMMENT 'e.g. sertifikat_ielts',
+  deskripsi     VARCHAR(500)    NULL,
+  wajib         TINYINT(1)      NOT NULL DEFAULT 1,
+  created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  INDEX idx_syarat_lowongan (lowongan_id),
+  CONSTRAINT fk_syarat_lowongan FOREIGN KEY (lowongan_id) REFERENCES lowongan(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 17. SESSION TOKENS (untuk autentikasi stateless)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS session_tokens (
   id          INT UNSIGNED    NOT NULL AUTO_INCREMENT,
@@ -315,10 +355,10 @@ INSERT INTO tahap_seleksi (nama, urutan, deskripsi) VALUES
   ('Keputusan Final',            5, 'Keputusan akhir penerimaan karyawan')
 ON DUPLICATE KEY UPDATE nama = VALUES(nama);
 
--- Akun Admin HRD (password: Admin@Radiant2026 → bcrypt)
+-- Akun sistem (admin & hrd) — hash bcrypt sesuai database yang sedang digunakan
 INSERT INTO users (email, password_hash, role, is_active, email_verified_at) VALUES
-  ('admin@radiant.sch.id', '$2b$12$placeholder_hash_admin', 'admin', 1, NOW()),
-  ('hrd@radiant.sch.id',   '$2b$12$placeholder_hash_hrd',   'hrd',   1, NOW())
+  ('admin@radiant.sch.id', '$2a$12$6bxj5Ph.X2eV2no7IvdyDO5WlY3D901T0gsPUBDuJkRl2Dlb3kole', 'admin', 1, NOW()),
+  ('hrd@radiant.sch.id',   '$2a$12$6bxj5Ph.X2eV2no7IvdyDO5WlY3D901T0gsPUBDuJkRl2Dlb3kole', 'hrd',   1, NOW())
 ON DUPLICATE KEY UPDATE role = VALUES(role);
 
 -- Profil admin
@@ -332,7 +372,7 @@ INSERT INTO lowongan (posisi, deskripsi, persyaratan, kuota, deadline, status, d
   ('Guru Matematika',
    'Mencari tenaga pendidik Matematika yang kompeten dan berpengalaman.',
    'S1 Pendidikan Matematika/Matematika, IPK minimal 3.0, Pengalaman mengajar min 1 tahun',
-   3, '2026-06-30', 'aktif', 2),
+   3, '2026-06-29', 'aktif', 2),
   ('Guru Bahasa Inggris',
    'Mencari guru Bahasa Inggris yang komunikatif dan inovatif.',
    'S1 Pendidikan Bahasa Inggris, Sertifikat TOEFL min 550, Mampu mengajar semua jenjang',

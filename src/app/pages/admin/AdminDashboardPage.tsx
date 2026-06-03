@@ -52,7 +52,7 @@ export function AdminDashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((c) => (
           <div key={c.label} className="rounded-2xl p-5 flex items-center gap-4 transition-all hover:shadow-md"
             style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(147,197,253,0.2)", boxShadow: "0 2px 12px rgba(59,130,246,0.06)" }}>
@@ -70,7 +70,7 @@ export function AdminDashboardPage() {
       <div className="rounded-2xl p-6"
         style={{ background: "rgba(255,255,255,0.9)", border: "1px solid rgba(147,197,253,0.2)", boxShadow: "0 2px 12px rgba(59,130,246,0.06)" }}>
         <h2 className="font-semibold text-slate-700 mb-4">Menu Cepat Admin</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             { label: "Kelola Lowongan",   desc: "Buat dan atur lowongan",   href: "/admin/lowongan",  color: "#3B82F6", bg: "#EFF6FF" },
             { label: "Verifikasi Berkas", desc: "Cek dan verifikasi berkas", href: "/admin/berkas",    color: "#10B981", bg: "#ECFDF5" },

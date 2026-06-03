@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import { NotifBell } from "../components/NotifBell";
 import {
   LayoutDashboard,
   Briefcase,
@@ -13,14 +14,16 @@ import {
   ChevronDown,
   Menu,
   X,
+  UserCog,
 } from "lucide-react";
 
 const adminNav = [
-  { path: "/admin/dashboard",  label: "Dashboard",     icon: LayoutDashboard },
-  { path: "/admin/lowongan",   label: "Kelola Lowongan", icon: Briefcase     },
-  { path: "/admin/berkas",     label: "Kelola Berkas", icon: FileStack       },
-  { path: "/admin/jadwal",     label: "Jadwal Interview", icon: Calendar     },
-  { path: "/admin/pelamar",    label: "Data Pelamar",  icon: Users           },
+  { path: "/admin/dashboard",  label: "Dashboard",       icon: LayoutDashboard },
+  { path: "/admin/lowongan",   label: "Kelola Lowongan", icon: Briefcase       },
+  { path: "/admin/berkas",     label: "Kelola Berkas",   icon: FileStack       },
+  { path: "/admin/jadwal",     label: "Jadwal Interview", icon: Calendar       },
+  { path: "/admin/pelamar",    label: "Data Pelamar",    icon: Users           },
+  { path: "/admin/users",      label: "Kelola User",     icon: UserCog         },
 ];
 
 export function AdminLayout() {
@@ -28,15 +31,42 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e: MediaQueryListEvent) => {
+      setIsDesktop(e.matches);
+      if (e.matches) setMobileOpen(false);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const showLabels = isDesktop ? sidebarOpen : true;
+  const sidebarWidth = isDesktop ? (sidebarOpen ? "240px" : "64px") : "260px";
 
   return (
     <div className="flex min-h-screen" style={{ background: "#F0F4FF" }}>
+      {/* Mobile overlay */}
+      {!isDesktop && mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className="flex flex-col transition-all duration-300 flex-shrink-0"
+        className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 flex-shrink-0 lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
         style={{
-          width: sidebarOpen ? "240px" : "64px",
-          background: "rgba(255,255,255,0.92)",
+          width: sidebarWidth,
+          background: "rgba(255,255,255,0.98)",
           backdropFilter: "blur(24px)",
           borderRight: "1px solid rgba(147,197,253,0.25)",
           boxShadow: "2px 0 20px rgba(59,130,246,0.06)",
@@ -50,21 +80,21 @@ export function AdminLayout() {
           >
             <BookOpen size={16} color="white" />
           </div>
-          {sidebarOpen && (
+          {showLabels && (
             <span style={{ color: "#1E3A5F", fontSize: "0.9rem" }} className="font-semibold tracking-tight whitespace-nowrap">
               Radiant HRD
             </span>
           )}
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => (isDesktop ? setSidebarOpen(!sidebarOpen) : setMobileOpen(false))}
             className="ml-auto p-1 rounded-lg hover:bg-slate-100 transition-colors"
           >
-            {sidebarOpen ? <X size={15} className="text-slate-400" /> : <Menu size={15} className="text-slate-400" />}
+            {showLabels ? <X size={15} className="text-slate-400" /> : <Menu size={15} className="text-slate-400" />}
           </button>
         </div>
 
         {/* Role badge */}
-        {sidebarOpen && (
+        {showLabels && (
           <div className="mx-3 mb-3 px-3 py-2 rounded-xl" style={{ background: "#EFF6FF" }}>
             <p className="text-xs text-blue-400">Login sebagai</p>
             <p className="text-sm font-medium text-blue-700 capitalize">{user?.role || "Admin"}</p>
@@ -77,6 +107,7 @@ export function AdminLayout() {
             <NavLink
               key={path}
               to={path}
+              onClick={() => !isDesktop && setMobileOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                   isActive
@@ -88,7 +119,7 @@ export function AdminLayout() {
               {({ isActive }) => (
                 <>
                   <Icon size={16} color={isActive ? "#2563EB" : undefined} className="flex-shrink-0" />
-                  {sidebarOpen && <span className="whitespace-nowrap">{label}</span>}
+                  {showLabels && <span className="whitespace-nowrap">{label}</span>}
                 </>
               )}
             </NavLink>
@@ -107,7 +138,7 @@ export function AdminLayout() {
             >
               {user?.namaLengkap?.[0]?.toUpperCase() ?? "A"}
             </div>
-            {sidebarOpen && (
+            {showLabels && (
               <>
                 <span className="text-xs text-slate-700 font-medium truncate flex-1 text-left">
                   {user?.namaLengkap || user?.email || "Admin"}
@@ -127,7 +158,7 @@ export function AdminLayout() {
               }}
             >
               <button
-                onClick={() => { navigate("/admin/profil"); setShowProfile(false); }}
+                onClick={() => { navigate("/admin/profil"); setShowProfile(false); setMobileOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
               >
                 <User size={14} /> Profil Saya
@@ -144,11 +175,43 @@ export function AdminLayout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        <div className="p-6 max-w-[1400px] mx-auto">
-          <Outlet />
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header
+          className="sticky top-0 z-30 h-14 flex items-center gap-3 px-4"
+          style={{
+            background: "rgba(255,255,255,0.92)",
+            backdropFilter: "blur(20px)",
+            borderBottom: "1px solid rgba(147,197,253,0.25)",
+          }}
+        >
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden p-2 rounded-xl hover:bg-slate-100 transition-colors text-slate-500"
+            aria-label="Buka menu"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="lg:hidden flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center"
+              style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)" }}
+            >
+              <BookOpen size={14} color="white" />
+            </div>
+            <span className="font-semibold text-slate-700 text-sm">Radiant HRD</span>
+          </div>
+          <div className="ml-auto flex items-center">
+            <NotifBell />
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto">
+          <div className="p-4 sm:p-6 max-w-[1400px] mx-auto">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Calendar, MapPin, Link2, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Calendar, MapPin, Link2, Users, UserPlus, XCircle } from "lucide-react";
 import { api } from "../../../lib/api";
 
 interface Jadwal {
@@ -11,6 +11,7 @@ interface Jadwal {
   lokasi: string | null;
   link_online: string | null;
   keterangan: string | null;
+  tahap_id: number;
   nama_tahap: string;
   posisi_lowongan: string;
   lowongan_id: number;
@@ -19,6 +20,8 @@ interface Jadwal {
 
 interface Lowongan { id: number; posisi: string; }
 interface TahapSeleksi { id: number; nama: string; }
+interface Peserta { id: number; lamaran_id: number; nama_lengkap: string | null; email: string; status_hadir: string; }
+interface PelamarOption { id: number; nama_lengkap: string | null; email: string; }
 
 const JENIS_OPTS = [
   { value: "tes_tertulis",    label: "Tes Tertulis" },
@@ -49,6 +52,13 @@ export function AdminJadwalPage() {
   const [lowonganList, setLowonganList] = useState<Lowongan[]>([]);
   const [tahapList, setTahapList] = useState<TahapSeleksi[]>([]);
 
+  // state peserta modal
+  const [pesertaJadwal, setPesertaJadwal] = useState<Jadwal | null>(null);
+  const [pesertaList, setPesertaList] = useState<Peserta[]>([]);
+  const [pelamarOptions, setPelamarOptions] = useState<PelamarOption[]>([]);
+  const [selectedLamaranId, setSelectedLamaranId] = useState("");
+  const [addingPeserta, setAddingPeserta] = useState(false);
+
   const load = () => {
     setLoading(true);
     api.get<Jadwal[]>("/admin/jadwal")
@@ -72,7 +82,7 @@ export function AdminJadwalPage() {
 
   function openEdit(j: Jadwal) {
     setForm({
-      tahapId: String(j.nama_tahap),
+      tahapId: String(j.tahap_id),
       lowonganId: String(j.lowongan_id),
       jenis: j.jenis,
       tanggal: j.tanggal.slice(0, 10),
@@ -120,6 +130,28 @@ export function AdminJadwalPage() {
     }
   }
 
+  function openPeserta(j: Jadwal) {
+    setPesertaJadwal(j);
+    setSelectedLamaranId("");
+    // Load peserta yang sudah terdaftar
+    api.get<Peserta[]>(`/admin/jadwal/${j.id}/peserta`).then(setPesertaList).catch(() => {});
+    // Load pelamar dari lowongan terkait sebagai pilihan
+    api.get<PelamarOption[]>(`/pelamar/admin?lowonganId=${j.lowongan_id}`)
+      .then(setPelamarOptions).catch(() => {});
+  }
+
+  async function handleTambahPeserta() {
+    if (!pesertaJadwal || !selectedLamaranId) return;
+    setAddingPeserta(true);
+    try {
+      await api.post(`/admin/jadwal/${pesertaJadwal.id}/tambah-peserta`, { lamaranId: Number(selectedLamaranId) });
+      setSelectedLamaranId("");
+      api.get<Peserta[]>(`/admin/jadwal/${pesertaJadwal.id}/peserta`).then(setPesertaList).catch(() => {});
+      load();
+    } catch { alert("Gagal menambah peserta"); }
+    finally { setAddingPeserta(false); }
+  }
+
   async function handleDelete(id: number) {
     try {
       await api.delete(`/admin/jadwal/${id}`);
@@ -132,14 +164,14 @@ export function AdminJadwalPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-slate-800">Jadwal Interview</h1>
           <p className="text-sm text-slate-500 mt-1">Atur jadwal tes dan wawancara seleksi</p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90 active:scale-95"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all hover:opacity-90 active:scale-95"
           style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}
         >
           <Plus size={16} /> Buat Jadwal
@@ -195,6 +227,12 @@ export function AdminJadwalPage() {
                 {j.keterangan && <p className="text-xs text-slate-400 mt-1">{j.keterangan}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => openPeserta(j)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-50 text-slate-500 hover:text-blue-600 transition-colors border border-slate-200"
+                >
+                  <Users size={13} /> Peserta ({j.jumlah_peserta})
+                </button>
                 <button onClick={() => openEdit(j)} className="p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors">
                   <Pencil size={14} />
                 </button>
@@ -285,6 +323,81 @@ export function AdminJadwalPage() {
                 style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)" }}>
                 {saving ? "Menyimpan..." : editId ? "Simpan" : "Buat Jadwal"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Peserta */}
+      {pesertaJadwal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}>
+          <div className="w-full max-w-lg rounded-3xl p-6 space-y-4 max-h-[85vh] flex flex-col" style={{ background: "white", boxShadow: "0 25px 60px rgba(0,0,0,0.15)" }}>
+            <div className="flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-800">Peserta Jadwal</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{JENIS_LABEL[pesertaJadwal.jenis]} — {pesertaJadwal.posisi_lowongan}</p>
+              </div>
+              <button onClick={() => setPesertaJadwal(null)} className="p-1.5 rounded-lg hover:bg-slate-100">
+                <X size={16} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Tambah peserta */}
+            <div className="flex gap-2 flex-shrink-0">
+              <select
+                className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400"
+                value={selectedLamaranId}
+                onChange={(e) => setSelectedLamaranId(e.target.value)}
+              >
+                <option value="">Pilih pelamar untuk ditambahkan...</option>
+                {pelamarOptions
+                  .filter(p => !pesertaList.some(ps => ps.lamaran_id === p.id))
+                  .map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.nama_lengkap || p.email}
+                    </option>
+                  ))
+                }
+              </select>
+              <button
+                onClick={handleTambahPeserta}
+                disabled={!selectedLamaranId || addingPeserta}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-white text-sm font-medium disabled:opacity-50 transition-all"
+                style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)" }}
+              >
+                <UserPlus size={14} /> {addingPeserta ? "..." : "Tambah"}
+              </button>
+            </div>
+
+            {/* Daftar peserta */}
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {pesertaList.length === 0 ? (
+                <div className="py-8 text-center text-slate-400">
+                  <Users size={32} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Belum ada peserta terdaftar</p>
+                  <p className="text-xs mt-1">Tambahkan pelamar dari dropdown di atas</p>
+                </div>
+              ) : (
+                pesertaList.map((p) => (
+                  <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "#F8FAFC" }}>
+                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 text-sm font-semibold flex-shrink-0">
+                      {(p.nama_lengkap || p.email)[0].toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-700 truncate">{p.nama_lengkap || p.email}</p>
+                      <p className="text-xs text-slate-400 truncate">{p.email}</p>
+                    </div>
+                    <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: "#EFF6FF", color: "#2563EB" }}>
+                      {p.status_hadir === "terdaftar" ? "Terdaftar" : p.status_hadir}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex-shrink-0 pt-2 border-t border-slate-100">
+              <p className="text-xs text-slate-400 text-center">{pesertaList.length} peserta terdaftar</p>
             </div>
           </div>
         </div>

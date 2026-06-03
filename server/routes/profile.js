@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const pool = require("../db");
 const authMiddleware = require("../middleware/auth");
 
@@ -62,6 +63,31 @@ router.put("/", authMiddleware, async (req, res) => {
     }
 
     return res.json({ message: "Profil berhasil diperbarui." });
+  } finally {
+    conn.release();
+  }
+});
+
+// PUT /api/profile/password — ganti password
+router.put("/password", authMiddleware, async (req, res) => {
+  const { passwordLama, passwordBaru } = req.body;
+  if (!passwordLama || !passwordBaru) {
+    return res.status(400).json({ message: "Password lama dan baru wajib diisi." });
+  }
+  if (passwordBaru.length < 8) {
+    return res.status(400).json({ message: "Password baru minimal 8 karakter." });
+  }
+  const conn = await pool.getConnection();
+  try {
+    const [rows] = await conn.query("SELECT password_hash FROM users WHERE id = ?", [req.user.id]);
+    if (!rows.length) return res.status(404).json({ message: "User tidak ditemukan." });
+
+    const match = await bcrypt.compare(passwordLama, rows[0].password_hash);
+    if (!match) return res.status(400).json({ message: "Password lama tidak sesuai." });
+
+    const hash = await bcrypt.hash(passwordBaru, 12);
+    await conn.query("UPDATE users SET password_hash = ? WHERE id = ?", [hash, req.user.id]);
+    return res.json({ message: "Password berhasil diperbarui." });
   } finally {
     conn.release();
   }
