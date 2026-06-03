@@ -51,6 +51,18 @@ export function AdminPelamarPage() {
   const [catatanHrd, setCatatanHrd] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // State untuk penilaian
+  const [evalTarget, setEvalTarget] = useState<Pelamar | null>(null);
+  const [evalData, setEvalData] = useState({
+    nilai_kompetensi: 0,
+    nilai_komunikasi: 0,
+    nilai_kepribadian: 0,
+    nilai_motivasi: 0,
+    rekomendasi: "direkomendasikan",
+    catatan: "",
+  });
+  const [evalSaving, setEvalSaving] = useState(false);
+
   const load = () => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -91,6 +103,42 @@ export function AdminPelamarPage() {
       alert("Gagal mengupdate status");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function openEvaluation(p: Pelamar) {
+    setEvalTarget(p);
+    try {
+      const res = await api.get<any>(`/penilaian/${p.id}`);
+      if (res) {
+        setEvalData({
+          nilai_kompetensi: res.nilai_kompetensi || 0,
+          nilai_komunikasi: res.nilai_komunikasi || 0,
+          nilai_kepribadian: res.nilai_kepribadian || 0,
+          nilai_motivasi: res.nilai_motivasi || 0,
+          rekomendasi: res.rekomendasi || "direkomendasikan",
+          catatan: res.catatan || "",
+        });
+      } else {
+        setEvalData({ nilai_kompetensi: 0, nilai_komunikasi: 0, nilai_kepribadian: 0, nilai_motivasi: 0, rekomendasi: "direkomendasikan", catatan: "" });
+      }
+    } catch (e) {
+      console.error(e);
+      setEvalData({ nilai_kompetensi: 0, nilai_komunikasi: 0, nilai_kepribadian: 0, nilai_motivasi: 0, rekomendasi: "direkomendasikan", catatan: "" });
+    }
+  }
+
+  async function handleSaveEvaluation() {
+    if (!evalTarget) return;
+    setEvalSaving(true);
+    try {
+      await api.post(`/penilaian/${evalTarget.id}`, evalData);
+      setEvalTarget(null);
+      alert("Penilaian berhasil disimpan!");
+    } catch (e) {
+      alert("Gagal menyimpan penilaian");
+    } finally {
+      setEvalSaving(false);
     }
   }
 
@@ -227,12 +275,20 @@ export function AdminPelamarPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <button
-                        onClick={() => openDetail(p)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-blue-600 hover:bg-blue-50 transition-colors"
-                      >
-                        <ChevronDown size={12} /> Detail
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openDetail(p)}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-blue-600 hover:bg-blue-50 transition-colors"
+                        >
+                          <ChevronDown size={12} /> Detail
+                        </button>
+                        <button
+                          onClick={() => openEvaluation(p)}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs text-green-600 hover:bg-green-50 transition-colors border border-green-200 bg-white"
+                        >
+                          <CheckCircle size={12} /> Penilai
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -311,6 +367,93 @@ export function AdminPelamarPage() {
                 style={{ background: "linear-gradient(135deg,#2563EB,#3B82F6)" }}
               >
                 {saving ? "Menyimpan..." : "Simpan Status"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Penilaian Modal */}
+      {evalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)" }}>
+          <div className="w-full max-w-lg rounded-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto" style={{ background: "white", boxShadow: "0 25px 60px rgba(0,0,0,0.15)" }}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-800">Penilaian Kandidat</h2>
+              <button onClick={() => setEvalTarget(null)} className="p-1.5 rounded-lg hover:bg-slate-100">
+                <X size={16} className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl space-y-2" style={{ background: "#F8FAFC" }}>
+              <p className="font-semibold text-slate-800">{evalTarget.nama_lengkap || evalTarget.email}</p>
+              <p className="text-xs text-slate-500 flex items-center gap-1"><Briefcase size={11} /> {evalTarget.posisi}</p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Nilai Kompetensi (0-100)</label>
+                  <input type="number" min="0" max="100" 
+                    value={evalData.nilai_kompetensi}
+                    onChange={(e) => setEvalData({...evalData, nilai_kompetensi: Number(e.target.value)})}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Nilai Komunikasi (0-100)</label>
+                  <input type="number" min="0" max="100" 
+                    value={evalData.nilai_komunikasi}
+                    onChange={(e) => setEvalData({...evalData, nilai_komunikasi: Number(e.target.value)})}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Nilai Kepribadian (0-100)</label>
+                  <input type="number" min="0" max="100" 
+                    value={evalData.nilai_kepribadian}
+                    onChange={(e) => setEvalData({...evalData, nilai_kepribadian: Number(e.target.value)})}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-600 mb-1 block">Nilai Motivasi (0-100)</label>
+                  <input type="number" min="0" max="100" 
+                    value={evalData.nilai_motivasi}
+                    onChange={(e) => setEvalData({...evalData, nilai_motivasi: Number(e.target.value)})}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">Rekomendasi</label>
+                <select 
+                  value={evalData.rekomendasi}
+                  onChange={(e) => setEvalData({...evalData, rekomendasi: e.target.value})}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400">
+                  <option value="sangat_direkomendasikan">Sangat Direkomendasikan</option>
+                  <option value="direkomendasikan">Direkomendasikan</option>
+                  <option value="tidak_direkomendasikan">Tidak Direkomendasikan</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">Catatan Penilaian</label>
+                <textarea
+                  rows={2}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-blue-400 resize-none"
+                  placeholder="Tambahkan catatan hasil penilaian..."
+                  value={evalData.catatan}
+                  onChange={(e) => setEvalData({...evalData, catatan: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setEvalTarget(null)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">Batal</button>
+              <button
+                onClick={handleSaveEvaluation}
+                disabled={evalSaving}
+                className="flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-all disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg,#16A34A,#22C55E)" }}
+              >
+                {evalSaving ? "Menyimpan..." : "Simpan Penilaian"}
               </button>
             </div>
           </div>
