@@ -14,6 +14,11 @@ import { KelolaBerkasPage } from "./pages/admin/KelolaBerkasPage";
 import { AdminJadwalPage } from "./pages/admin/AdminJadwalPage";
 import { AdminPelamarPage } from "./pages/admin/AdminPelamarPage";
 import { KelolaUserPage } from "./pages/admin/KelolaUserPage";
+import { BankSoalPage } from "./pages/admin/BankSoalPage";
+import { AdminTesPage } from "./pages/admin/AdminTesPage";
+import { PenilaianPage } from "./pages/admin/PenilaianPage";
+import { KelulusanPage } from "./pages/admin/KelulusanPage";
+import { TesOnlinePage } from "./pages/TesOnlinePage";
 import { useAuth } from "./context/AuthContext";
 
 function PrivateRoute() {
@@ -60,6 +65,7 @@ export const router = createBrowserRouter([
           { path: "lowongan",   Component: DaftarLowonganPage  },
           { path: "berkas",     Component: UploadBerkasPage    },
           { path: "jadwal",     Component: JadwalPage          },
+          { path: "tes",        Component: TesOnlinePage       },
           { path: "profil",     Component: ProfilePage         },
         ],
       },
@@ -78,6 +84,10 @@ export const router = createBrowserRouter([
           { path: "berkas",      Component: KelolaBerkasPage    },
           { path: "jadwal",      Component: AdminJadwalPage     },
           { path: "pelamar",     Component: AdminPelamarPage    },
+          { path: "bank-soal",   Component: BankSoalPage        },
+          { path: "tes",         Component: AdminTesPage        },
+          { path: "penilaian",   Component: PenilaianPage       },
+          { path: "kelulusan",   Component: KelulusanPage       },
           { path: "users",       Component: KelolaUserPage      },
           { path: "profil",      Component: ProfilePage         },
         ],

@@ -310,6 +310,24 @@ router.patch("/admin/inti/:id/verifikasi", adminAuth, async (req, res) => {
        diverifikasi_oleh=?, diverifikasi_pada=NOW(), updated_at=NOW() WHERE id=?`,
       [status, catatan || null, req.user.id, req.params.id]
     );
+
+    // Notifikasi ke pelamar (US-008 skenario 2)
+    if (status !== "belum_diproses") {
+      const [[berkas]] = await db.query(
+        "SELECT user_id, jenis_dokumen FROM berkas_inti WHERE id=?", [req.params.id]
+      );
+      if (berkas) {
+        const judulNotif = status === "terverifikasi" ? "Berkas Terverifikasi" : "Berkas Ditolak";
+        const pesanNotif = status === "terverifikasi"
+          ? `Berkas ${berkas.jenis_dokumen} Anda telah terverifikasi. Anda dapat lanjut ke tahap seleksi berikutnya.`
+          : `Berkas ${berkas.jenis_dokumen} Anda ditolak. ${catatan ? "Catatan: " + catatan : "Silakan upload ulang berkas yang sesuai."}`;
+        await db.query(
+          "INSERT INTO notifikasi (user_id, judul, pesan, tipe, link_url) VALUES (?,?,?,?,?)",
+          [berkas.user_id, judulNotif, pesanNotif, status === "terverifikasi" ? "sukses" : "peringatan", "/berkas"]
+        );
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -360,6 +378,26 @@ router.patch("/admin/:id/verifikasi", adminAuth, async (req, res) => {
        diverifikasi_oleh=?, diverifikasi_pada=NOW(), updated_at=NOW() WHERE id=?`,
       [status, catatan || null, req.user.id, req.params.id]
     );
+
+    // Notifikasi ke pelamar (US-008 skenario 2)
+    if (status !== "belum_diproses") {
+      const [[dok]] = await db.query(
+        `SELECT dl.jenis_dokumen, lm.user_id FROM dokumen_lamaran dl
+         JOIN lamaran lm ON lm.id = dl.lamaran_id WHERE dl.id=?`,
+        [req.params.id]
+      );
+      if (dok) {
+        const judulNotif = status === "terverifikasi" ? "Berkas Terverifikasi" : "Berkas Ditolak";
+        const pesanNotif = status === "terverifikasi"
+          ? `Berkas ${dok.jenis_dokumen} Anda telah terverifikasi. Anda dapat lanjut ke tahap seleksi berikutnya.`
+          : `Berkas ${dok.jenis_dokumen} Anda ditolak. ${catatan ? "Catatan: " + catatan : "Silakan upload ulang berkas yang sesuai."}`;
+        await db.query(
+          "INSERT INTO notifikasi (user_id, judul, pesan, tipe, link_url) VALUES (?,?,?,?,?)",
+          [dok.user_id, judulNotif, pesanNotif, status === "terverifikasi" ? "sukses" : "peringatan", "/berkas"]
+        );
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error(err);

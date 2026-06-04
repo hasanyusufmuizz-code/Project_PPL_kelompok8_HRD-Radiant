@@ -15,6 +15,9 @@ import {
   Menu,
   X,
   UserCog,
+  ClipboardList,
+  Star,
+  Trophy,
 } from "lucide-react";
 
 const adminNav = [
@@ -23,6 +26,10 @@ const adminNav = [
   { path: "/admin/berkas",     label: "Kelola Berkas",   icon: FileStack       },
   { path: "/admin/jadwal",     label: "Jadwal Interview", icon: Calendar       },
   { path: "/admin/pelamar",    label: "Data Pelamar",    icon: Users           },
+  { path: "/admin/bank-soal",  label: "Bank Soal",       icon: BookOpen        },
+  { path: "/admin/tes",        label: "Tes Online",      icon: ClipboardList   },
+  { path: "/admin/penilaian",  label: "Penilaian",       icon: Star            },
+  { path: "/admin/kelulusan",  label: "Kelulusan",       icon: Trophy          },
   { path: "/admin/users",      label: "Kelola User",     icon: UserCog         },
 ];
 

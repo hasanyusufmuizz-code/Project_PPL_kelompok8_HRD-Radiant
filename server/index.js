@@ -16,6 +16,11 @@ const tahapRoutes     = require("./routes/tahap");
 const pelamarRoutes   = require("./routes/pelamar");
 const usersRoutes     = require("./routes/users");
 const notifikasiRoutes = require("./routes/notifikasi");
+// Sprint 2
+const bankSoalRoutes  = require("./routes/bankSoal");
+const tesRoutes       = require("./routes/tes");
+const penilaianRoutes = require("./routes/penilaian");
+const kelulusanRoutes = require("./routes/kelulusan");
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +44,11 @@ app.use("/api/tahap",        tahapRoutes);
 app.use("/api/pelamar",      pelamarRoutes);
 app.use("/api/admin/users",  usersRoutes);
 app.use("/api/notifikasi",   notifikasiRoutes);
+// Sprint 2
+app.use("/api/admin/bank-soal", bankSoalRoutes);
+app.use("/api/tes",             tesRoutes);
+app.use("/api/penilaian",       penilaianRoutes);
+app.use("/api/admin/kelulusan", kelulusanRoutes);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 

@@ -10,6 +10,7 @@ import {
   Briefcase,
   FileStack,
   Calendar,
+  ClipboardList,
   Menu,
   X,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems = [
   { path: "/lowongan",  label: "Lowongan",   icon: Briefcase       },
   { path: "/berkas",    label: "Berkas",      icon: FileStack       },
   { path: "/jadwal",    label: "Jadwal",      icon: Calendar        },
+  { path: "/tes",       label: "Tes Online",  icon: ClipboardList   },
 ];
 
 export function Navbar() {
