@@ -343,6 +343,111 @@ CREATE TABLE IF NOT EXISTS session_tokens (
 ) ENGINE=InnoDB;
 
 -- ============================================================
+-- 18. BANK SOAL (Master soal untuk Tes Online)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS bank_soal (
+  id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  tipe            ENUM('pilihan_ganda','esai') NOT NULL,
+  pertanyaan      TEXT            NOT NULL,
+  opsi_a          TEXT            NULL,
+  opsi_b          TEXT            NULL,
+  opsi_c          TEXT            NULL,
+  opsi_d          TEXT            NULL,
+  kunci_jawaban   VARCHAR(10)     NULL,
+  bobot           INT UNSIGNED    NOT NULL DEFAULT 1,
+  lowongan_id     INT UNSIGNED    NULL,
+  dibuat_oleh     INT UNSIGNED    NULL,
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  INDEX idx_bank_soal_lowongan (lowongan_id),
+  CONSTRAINT fk_bank_soal_lowongan FOREIGN KEY (lowongan_id) REFERENCES lowongan(id) ON DELETE CASCADE,
+  CONSTRAINT fk_bank_soal_pembuat FOREIGN KEY (dibuat_oleh) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 19. TES ONLINE (Sesi tes yang dibuat HRD)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tes_online (
+  id            INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  judul         VARCHAR(200)    NOT NULL,
+  durasi_menit  INT UNSIGNED    NOT NULL DEFAULT 60,
+  jumlah_soal   INT UNSIGNED    NOT NULL DEFAULT 0,
+  kkm           DECIMAL(5,2)    NOT NULL DEFAULT 60,
+  status        ENUM('aktif','nonaktif') NOT NULL DEFAULT 'aktif',
+  lowongan_id   INT UNSIGNED    NULL,
+  jadwal_id     INT UNSIGNED    NULL,
+  dibuat_oleh   INT UNSIGNED    NOT NULL,
+  created_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  INDEX idx_tes_online_lowongan (lowongan_id),
+  INDEX idx_tes_online_jadwal (jadwal_id),
+  CONSTRAINT fk_tes_online_lowongan FOREIGN KEY (lowongan_id) REFERENCES lowongan(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tes_online_jadwal FOREIGN KEY (jadwal_id) REFERENCES jadwal_seleksi(id) ON DELETE SET NULL,
+  CONSTRAINT fk_tes_online_pembuat FOREIGN KEY (dibuat_oleh) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 20. TES SOAL (Relasi soal di dalam suatu tes & urutannya)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tes_soal (
+  id        INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  tes_id    INT UNSIGNED    NOT NULL,
+  soal_id   INT UNSIGNED    NOT NULL,
+  urutan    INT UNSIGNED    NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_tes_soal (tes_id, soal_id),
+  INDEX idx_tes_soal_tes (tes_id),
+  INDEX idx_tes_soal_soal (soal_id),
+  CONSTRAINT fk_tes_soal_tes FOREIGN KEY (tes_id) REFERENCES tes_online(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tes_soal_soal FOREIGN KEY (soal_id) REFERENCES bank_soal(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 21. TES PENGERJAAN (Sesi pengerjaan tes oleh pelamar)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tes_pengerjaan (
+  id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  tes_id          INT UNSIGNED    NOT NULL,
+  lamaran_id      INT UNSIGNED    NOT NULL,
+  status          ENUM('belum_mulai','berlangsung','selesai','menunggu_koreksi') NOT NULL DEFAULT 'belum_mulai',
+  skor            DECIMAL(5,2)    NULL,
+  jumlah_benar    INT UNSIGNED    NULL,
+  waktu_mulai     DATETIME        NULL,
+  waktu_selesai   DATETIME        NULL,
+  waktu_deadline  DATETIME        NULL,
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_tes_pengerjaan (tes_id, lamaran_id),
+  INDEX idx_tes_pengerjaan_lamaran (lamaran_id),
+  CONSTRAINT fk_tes_pengerjaan_tes FOREIGN KEY (tes_id) REFERENCES tes_online(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tes_pengerjaan_lamaran FOREIGN KEY (lamaran_id) REFERENCES lamaran(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
+-- 22. TES JAWABAN (Jawaban pelamar per soal)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS tes_jawaban (
+  id              INT UNSIGNED    NOT NULL AUTO_INCREMENT,
+  pengerjaan_id   INT UNSIGNED    NOT NULL,
+  soal_id         INT UNSIGNED    NOT NULL,
+  jawaban         VARCHAR(10)     NULL,
+  jawaban_text    TEXT            NULL,
+  is_benar        TINYINT(1)      NULL,
+  nilai_esai      DECIMAL(5,2)    NULL,
+  is_dinilai      TINYINT(1)      NOT NULL DEFAULT 0,
+  created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_tes_jawaban (pengerjaan_id, soal_id),
+  INDEX idx_tes_jawaban_soal (soal_id),
+  CONSTRAINT fk_tes_jawaban_pengerjaan FOREIGN KEY (pengerjaan_id) REFERENCES tes_pengerjaan(id) ON DELETE CASCADE,
+  CONSTRAINT fk_tes_jawaban_soal FOREIGN KEY (soal_id) REFERENCES bank_soal(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ============================================================
 -- DATA AWAL (Seed Data)
 -- ============================================================
 
