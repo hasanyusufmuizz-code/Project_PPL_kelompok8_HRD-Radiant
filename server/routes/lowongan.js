@@ -57,10 +57,15 @@ router.post("/daftar", auth, async (req, res) => {
 
     // Cek apakah sudah pernah mendaftar
     const [existing] = await db.query(
-      `SELECT id FROM lamaran WHERE user_id = ? AND lowongan_id = ?`,
+      `SELECT id, status FROM lamaran WHERE user_id = ? AND lowongan_id = ?`,
       [req.user.id, lowonganId]
     );
-    if (existing.length) return res.status(409).json({ error: "Anda sudah mendaftar lowongan ini" });
+    if (existing.length) {
+      if (existing[0].status === "ditolak") {
+        return res.status(409).json({ error: "Anda tidak dapat mendaftar ulang pada batch yang sama" });
+      }
+      return res.status(409).json({ error: "Anda sudah mendaftar lowongan ini" });
+    }
 
     const [result] = await db.query(
       `INSERT INTO lamaran (user_id, lowongan_id, status) VALUES (?, ?, 'pending')`,

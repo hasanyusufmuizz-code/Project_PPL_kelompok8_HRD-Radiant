@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Eye, EyeOff, Mail, Lock, BookOpen, ArrowRight, CheckCircle } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../context/AuthContext";
+import { getHomePathForRole } from "../utils/roleHome";
 
 export function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,8 +27,7 @@ export function LoginPage() {
           { email: email.trim(), password: password.trim() }
         );
         login(res.token, res.user);
-        const isAdmin = res.user.role === "admin" || res.user.role === "hrd";
-        navigate(isAdmin ? "/admin/dashboard" : "/dashboard");
+        navigate(getHomePathForRole(res.user.role));
       } else {
         const res = await api.post<{ token: string; user: { id: number; email: string; namaLengkap: string; role: string; avatarUrl: string | null } }>(
           "/auth/register",

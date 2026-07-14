@@ -9,7 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 interface UserItem {
   id: number;
   email: string;
-  role: "pelamar" | "hrd" | "admin";
+  role: "pelamar" | "hrd" | "admin" | "manajer_training" | "pimpinan";
   is_active: number;
   created_at: string;
   nama_lengkap: string | null;
@@ -19,9 +19,11 @@ interface UserItem {
 }
 
 const ROLE_META = {
-  admin:   { label: "Admin",   bg: "#F5F3FF", text: "#7C3AED" },
-  hrd:     { label: "HRD",     bg: "#EFF6FF", text: "#2563EB" },
-  pelamar: { label: "Pelamar", bg: "#ECFDF5", text: "#065F46" },
+  admin:            { label: "Admin",            bg: "#F5F3FF", text: "#7C3AED" },
+  hrd:              { label: "HRD",              bg: "#EFF6FF", text: "#2563EB" },
+  pelamar:          { label: "Pelamar",          bg: "#ECFDF5", text: "#065F46" },
+  manajer_training: { label: "Manajer Training", bg: "#FFF7ED", text: "#C2410C" },
+  pimpinan:         { label: "Pimpinan",         bg: "#FFFBEB", text: "#B45309" },
 };
 
 function formatTgl(d: string) {
@@ -180,6 +182,8 @@ export function KelolaUserPage() {
             <option value="admin">Admin</option>
             <option value="hrd">HRD</option>
             <option value="pelamar">Pelamar</option>
+            <option value="manajer_training">Manajer Training</option>
+            <option value="pimpinan">Pimpinan</option>
           </select>
         </div>
       </div>
@@ -312,7 +316,7 @@ export function KelolaUserPage() {
                 <Shield size={12} /> Ubah Role
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {(["pelamar", "hrd", "admin"] as const).map(r => {
+                {(["pelamar", "hrd", "admin", "manajer_training", "pimpinan"] as const).map(r => {
                   const meta = ROLE_META[r];
                   return (
                     <button key={r} onClick={() => setNewRole(r)}

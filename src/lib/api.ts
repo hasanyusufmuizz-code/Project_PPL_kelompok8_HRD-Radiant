@@ -18,12 +18,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return data as T;
 }
 
-export async function apiUpload<T = unknown>(path: string, formData: FormData): Promise<T> {
+export async function apiUpload<T = unknown>(path: string, formData: FormData, method: string = "POST"): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, { method: "POST", headers, body: formData });
+  const res = await fetch(`${BASE_URL}${path}`, { method, headers, body: formData });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || data.error || "Upload gagal.");
   return data as T;

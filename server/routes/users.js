@@ -39,7 +39,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
   if (targetId === req.user.id) return res.status(400).json({ error: "Tidak dapat mengedit akun sendiri di sini." });
 
   const { role, is_active, password } = req.body;
-  const validRoles = ["pelamar", "hrd", "admin"];
+  const validRoles = ["pelamar", "hrd", "admin", "manajer_training", "pimpinan"];
 
   try {
     const updates = [];

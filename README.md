@@ -1,11 +1,40 @@
+# Project_PPL_kelompok8_HRD-Radiant
+## Deskripsi
+Project ini merupakan aplikasi yang dikembangkan untuk membantu proses Human Resource Development (HRD) dalam mengelola data karyawan, rekrutmen, dan administrasi secara lebih efisien.
 
-  # Radiant SDM Recruitments
+## Anggota Tim
+- Hasan Yusuf Muizz
+- Akhdan Yavi Widiyanto
+- Raihan Juniardi
+- Ahmad Daffa Alfisyahri
+- Abdullah Maulana Putra
+- Alia felanitami
+- Zaidan 
 
-  This is a code bundle for Radiant SDM Recruitments. The original project is available at https://www.figma.com/design/8dz6gTu84Pa8O4ue1RdLHv/Radiant-SDM-Recruitments.
+## Tech Stack
+- Node.js
+- JavaScript
+- GitHub
+- GitHub Actions (CI/CD)
 
-  ## Running the code
+## Cara Menjalankan Project
+1. Install Node.js (https://nodejs.org)
+2. Clone repository:
+   git clone https://github.com/hasanyusufmuizz-code/Project_PPL_kelompok8_HRD-Radiant.git
 
-  Run `npm i` to install the dependencies.
+3. Masuk ke folder project:
+   cd Project_PPL_kelompok8_HRD-Radiant
 
-  Run `npm run dev` to start the development server.
-  
+4. Install dependencies:
+   npm install
+
+5. Jalankan aplikasi:
+   npm start
+
+## Radiant SDM Recruitments (Frontend)
+
+This is a code bundle for Radiant SDM Recruitments. The original project is available at https://www.figma.com/design/8dz6gTu84Pa8O4ue1RdLHv/Radiant-SDM-Recruitments.
+
+Run `npm i` to install the dependencies.
+
+Run `npm run dev` to start the development server.
