@@ -16,6 +16,11 @@ const tahapRoutes     = require("./routes/tahap");
 const pelamarRoutes   = require("./routes/pelamar");
 const usersRoutes     = require("./routes/users");
 const notifikasiRoutes = require("./routes/notifikasi");
+const kelulusanRoutes         = require("./routes/kelulusan");
+const kepegawaianRoutes       = require("./routes/kepegawaian");
+const materiTrainingRoutes    = require("./routes/materiTraining");
+const jadwalTrainingRoutes    = require("./routes/jadwalTraining");
+const pimpinanDashboardRoutes = require("./routes/pimpinanDashboard");
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -39,6 +44,11 @@ app.use("/api/tahap",        tahapRoutes);
 app.use("/api/pelamar",      pelamarRoutes);
 app.use("/api/admin/users",  usersRoutes);
 app.use("/api/notifikasi",   notifikasiRoutes);
+app.use("/api/kelulusan",       kelulusanRoutes);
+app.use("/api/kepegawaian",     kepegawaianRoutes);
+app.use("/api/materi-training", materiTrainingRoutes);
+app.use("/api/jadwal-training", jadwalTrainingRoutes);
+app.use("/api/pimpinan",        pimpinanDashboardRoutes);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 

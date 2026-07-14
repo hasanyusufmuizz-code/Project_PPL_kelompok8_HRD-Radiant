@@ -12,6 +12,7 @@ import {
   Calendar,
   Menu,
   X,
+  GraduationCap,
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { path: "/lowongan",  label: "Lowongan",   icon: Briefcase       },
   { path: "/berkas",    label: "Berkas",      icon: FileStack       },
   { path: "/jadwal",    label: "Jadwal",      icon: Calendar        },
+  { path: "/materi-training", label: "Materi Training", icon: GraduationCap },
 ];
 
 export function Navbar() {

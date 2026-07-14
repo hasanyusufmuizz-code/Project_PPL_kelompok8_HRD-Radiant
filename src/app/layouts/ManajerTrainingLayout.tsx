@@ -3,34 +3,23 @@ import { NavLink, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
 import { NotifBell } from "../components/NotifBell";
 import {
-  LayoutDashboard,
-  Briefcase,
-  FileStack,
-  Calendar,
-  Users,
   BookOpen,
+  CalendarClock,
+  ClipboardCheck,
   LogOut,
   User,
   ChevronDown,
   Menu,
   X,
-  UserCog,
-  GraduationCap,
-  IdCard,
 } from "lucide-react";
 
-const adminNav = [
-  { path: "/admin/dashboard",  label: "Dashboard",       icon: LayoutDashboard },
-  { path: "/admin/lowongan",   label: "Kelola Lowongan", icon: Briefcase       },
-  { path: "/admin/berkas",     label: "Kelola Berkas",   icon: FileStack       },
-  { path: "/admin/jadwal",     label: "Jadwal Interview", icon: Calendar       },
-  { path: "/admin/pelamar",    label: "Data Pelamar",    icon: Users           },
-  { path: "/admin/kelulusan",  label: "Penentuan Kelulusan", icon: GraduationCap },
-  { path: "/admin/pengajar",   label: "Data Pengajar",   icon: IdCard          },
-  { path: "/admin/users",      label: "Kelola User",     icon: UserCog         },
+const trainingNav = [
+  { path: "/manajer-training/materi",   label: "Materi Training",  icon: BookOpen       },
+  { path: "/manajer-training/jadwal",   label: "Jadwal Training",  icon: CalendarClock  },
+  { path: "/manajer-training/absensi",  label: "Absensi Training", icon: ClipboardCheck },
 ];
 
-export function AdminLayout() {
+export function ManajerTrainingLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -55,7 +44,6 @@ export function AdminLayout() {
 
   return (
     <div className="flex min-h-screen" style={{ background: "#F0F4FF" }}>
-      {/* Mobile overlay */}
       {!isDesktop && mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm lg:hidden"
@@ -63,7 +51,6 @@ export function AdminLayout() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 flex-shrink-0 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -76,7 +63,6 @@ export function AdminLayout() {
           boxShadow: "2px 0 20px rgba(59,130,246,0.06)",
         }}
       >
-        {/* Logo */}
         <div className="h-16 flex items-center px-4 gap-2.5 flex-shrink-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -97,17 +83,15 @@ export function AdminLayout() {
           </button>
         </div>
 
-        {/* Role badge */}
         {showLabels && (
           <div className="mx-3 mb-3 px-3 py-2 rounded-xl" style={{ background: "#EFF6FF" }}>
             <p className="text-xs text-blue-400">Login sebagai</p>
-            <p className="text-sm font-medium text-blue-700 capitalize">{user?.role || "Admin"}</p>
+            <p className="text-sm font-medium text-blue-700 capitalize">Manajer Training</p>
           </div>
         )}
 
-        {/* Nav */}
         <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
-          {adminNav.map(({ path, label, icon: Icon }) => (
+          {trainingNav.map(({ path, label, icon: Icon }) => (
             <NavLink
               key={path}
               to={path}
@@ -130,7 +114,6 @@ export function AdminLayout() {
           ))}
         </nav>
 
-        {/* Profile dropdown */}
         <div className="p-3 border-t border-slate-100 relative">
           <button
             onClick={() => setShowProfile(!showProfile)}
@@ -140,12 +123,12 @@ export function AdminLayout() {
               className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
               style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)" }}
             >
-              {user?.namaLengkap?.[0]?.toUpperCase() ?? "A"}
+              {user?.namaLengkap?.[0]?.toUpperCase() ?? "M"}
             </div>
             {showLabels && (
               <>
                 <span className="text-xs text-slate-700 font-medium truncate flex-1 text-left">
-                  {user?.namaLengkap || user?.email || "Admin"}
+                  {user?.namaLengkap || user?.email || "Manajer Training"}
                 </span>
                 <ChevronDown size={12} className="text-slate-400 flex-shrink-0" />
               </>
@@ -162,7 +145,7 @@ export function AdminLayout() {
               }}
             >
               <button
-                onClick={() => { navigate("/admin/profil"); setShowProfile(false); setMobileOpen(false); }}
+                onClick={() => { navigate("/manajer-training/profil"); setShowProfile(false); setMobileOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
               >
                 <User size={14} /> Profil Saya
@@ -178,9 +161,7 @@ export function AdminLayout() {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
         <header
           className="sticky top-0 z-30 h-14 flex items-center gap-3 px-4"
           style={{
